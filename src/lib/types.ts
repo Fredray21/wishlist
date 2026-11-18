@@ -58,6 +58,8 @@ export interface PublicItem {
   receivedAt?: string | null;
   createdAt: string;
   reserved?: boolean;
+  /** Pseudo de la personne qui a réservé (visiteurs uniquement, jamais envoyé à l'admin). */
+  reservedBy?: string;
 }
 
 export interface ItemsResponse {

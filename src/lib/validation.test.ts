@@ -41,3 +41,17 @@ describe("parseOg", () => {
     });
   });
 });
+
+describe("cleanTitle", () => {
+  it("nettoie les titres Amazon", async () => {
+    const { cleanTitle } = await import("./og");
+    expect(cleanTitle("Enemy For A Brain: Beth, Zara: 9781068391804: Amazon.com: Books")).toBe("Enemy For A Brain — Beth, Zara");
+    expect(cleanTitle("Amazon.fr : LEGO Technic Koenigsegg Jesko")).toBe("LEGO Technic Koenigsegg Jesko");
+  });
+  it("retire le nom de la boutique en suffixe", async () => {
+    const { cleanTitle } = await import("./og");
+    expect(cleanTitle("Casque Sony WH-1000XM5 | Fnac", "Fnac")).toBe("Casque Sony WH-1000XM5");
+    expect(cleanTitle("Mug isotherme - Ma Boutique", "Ma Boutique")).toBe("Mug isotherme");
+    expect(cleanTitle("Super produit")).toBe("Super produit");
+  });
+});

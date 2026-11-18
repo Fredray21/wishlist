@@ -1,6 +1,7 @@
 import { isAdmin } from "@/lib/auth";
 import { getSiteConfig } from "@/lib/config";
 import { readWishlist } from "@/lib/store";
+import { autoTheme, currentMonth } from "@/lib/themes";
 import { toPublicItems } from "@/lib/view";
 import { WishlistApp } from "@/components/WishlistApp";
 
@@ -15,7 +16,7 @@ export default async function Home() {
       initialItems={toPublicItems(data.items, admin)}
       isAdmin={admin}
       ownerName={ownerName}
-      birthdayMonth={birthdayMonth}
+      theme={autoTheme(currentMonth(), birthdayMonth)}
     />
   );
 }

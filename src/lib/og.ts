@@ -66,12 +66,39 @@ function parsePrice(value: string | undefined): number | undefined {
   return Number.isFinite(n) && n > 0 && n < 1_000_000 ? Math.round(n * 100) / 100 : undefined;
 }
 
+const STORE_WORDS = /^(amazon(\.[a-z.]+)?|amazon\.[a-z.]+|books?|livres?|fnac|cdiscount|darty|boulanger|decathlon|ikea|zalando|etsy|ebay|aliexpress|shop|boutique|store|kindle store|high-tech|jeux et jouets|toys? & games)$/i;
+
+/** Nettoie un titre de page produit : supprime le nom de la boutique, les ISBN, les suffixes « | Site ». */
+export function cleanTitle(raw: string, siteName?: string): string {
+  let title = raw.replace(/\s+/g, " ").trim();
+  // « Amazon.fr : Titre » ou « Titre | Boutique » / « Titre - Boutique »
+  title = title.replace(/^amazon\.[a-z.]+\s*:\s*/i, "");
+  const site = siteName?.trim();
+  for (const sep of [" | ", " – ", " — ", " - "]) {
+    const idx = title.lastIndexOf(sep);
+    if (idx > 0) {
+      const tail = title.slice(idx + sep.length).trim();
+      if ((site && tail.toLowerCase().includes(site.toLowerCase())) || STORE_WORDS.test(tail) || /amazon|fnac|cdiscount/i.test(tail)) {
+        title = title.slice(0, idx).trim();
+      }
+    }
+  }
+  // Segments séparés par « : » (format Amazon : Titre: Auteur: ISBN: Amazon.com: Books)
+  const parts = title.split(/\s*:\s+/);
+  if (parts.length > 1) {
+    const kept = parts.filter((p) => p && !STORE_WORDS.test(p) && !/^[\d\s-]{9,17}x?$/i.test(p) && !/amazon/i.test(p));
+    // On garde le titre principal ; l'auteur (2e segment court) est conservé s'il reste lisible.
+    title = kept.slice(0, kept.length > 1 && kept[1].length <= 40 ? 2 : 1).join(" — ") || parts[0];
+  }
+  return title.slice(0, 200);
+}
+
 export function parseOg(html: string, baseUrl: string): OgResult {
   const result: OgResult = {};
   const title =
     metaContent(html, ["og:title", "twitter:title"]) ??
     (html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ? decodeEntities(html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)![1]) : undefined);
-  if (title) result.title = title.replace(/\s+/g, " ").slice(0, 200);
+  if (title) result.title = cleanTitle(title, metaContent(html, ["og:site_name"]));
 
   const image = metaContent(html, ["og:image:secure_url", "og:image", "og:image:url", "twitter:image", "twitter:image:src"]);
   if (image) {

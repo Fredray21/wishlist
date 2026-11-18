@@ -11,27 +11,30 @@ Wishlist personnelle : mes proches réservent un cadeau en secret, et moi je ne 
 ### Visiteurs (sans compte)
 - Bandeau anti-spoiler « 🤫 Chut ! … » en haut de la liste, rappelé dans la fenêtre de réservation
 - Filtres : Disponibles / Tous, catégorie, tranche de prix, tri (priorité, prix, récents)
-- **Réserver ce cadeau** : prénom et note facultatifs. Un **code à 4 chiffres** est affiché et enregistré, avec un jeton, dans le `localStorage`
-- Les autres visiteurs voient « Déjà réservé ». « Annuler ma réservation » marche en un clic avec le jeton local, ou avec le code depuis un autre appareil (tentatives limitées)
+- **Réserver ce cadeau** : prénom ou pseudo **obligatoire** (visible des autres visiteurs, jamais de l'admin), note privée facultative. Un **code à 4 chiffres** est affiché et enregistré, avec un jeton, dans le `localStorage`
+- Les autres visiteurs voient « Réservé par Camille ». « Annuler ma réservation » marche en un clic avec le jeton local, ou avec le code depuis un autre appareil (tentatives limitées)
 
 ### Admin (`/admin` ou le cadenas du pied de page)
 - Mot de passe `ADMIN_PASSWORD`, cookie `HttpOnly` / `SameSite=Strict` signé en HMAC avec `SESSION_SECRET`
 - **Anti-spoiler strict** : quand on est connecté en admin, l'API et le HTML ne contiennent **jamais** la clé `reserved`. Les routes de réservation renvoient 403 à l'admin, pour qu'aucun message d'erreur ne trahisse rien
-- Ajouter un cadeau (avec remplissage automatique titre / image / prix depuis OpenGraph), le modifier, le supprimer, le marquer « Reçu » ou annuler ce marquage (section « Déjà reçus » visible par tous)
+- Ajouter un cadeau (avec remplissage automatique titre / image / prix depuis OpenGraph, titres de boutiques nettoyés), le modifier, le supprimer, le marquer « Reçu » ou annuler ce marquage (section « Déjà reçus » visible par tous)
+- **`/admin/reservations`** : libérer une réservation **à l'aveugle** (un cadeau ou tous). La réponse est identique que le cadeau soit réservé ou non : l'admin ne sait jamais lequel l'était
 
-### Thèmes saisonniers
-Le sélecteur en haut à droite propose `Auto` (par défaut), `Noël`, `Anniversaire` et `Minimaliste`. Le choix est mémorisé par navigateur et appliqué avant l'affichage, sans flash.
+### Thèmes saisonniers (toujours automatiques)
+Le thème est choisi par le serveur selon le mois (heure de Paris), sans sélecteur :
 
-| Mois | Thème « Auto » |
+| Mois | Thème |
 | --- | --- |
-| Novembre, décembre, janvier | Noël : rouge profond, vert sapin, doré, flocons en CSS pur |
-| `BIRTHDAY_MONTH` et le mois précédent | Anniversaire : couleurs vives et confettis en CSS |
-| Le reste de l'année | Minimaliste : sobre, suit le mode clair ou sombre du système |
+| Novembre, décembre, janvier | Noël : sapin nuit, ivoire, bordeaux & champagne, neige |
+| `BIRTHDAY_MONTH` et le mois précédent | Anniversaire : pêche poudrée, terracotta & soleil, confettis |
+| Le reste de l'année | Minimaliste : noir & ivoire, façon maison de couture |
 
 ### Design & secrets
-Direction artistique « magazine de mode » : couverture avec titre géant animé lettre par lettre, bandeau défilant, cartes lookbook numérotées avec inclinaison 3D, grain papier, transitions de vue au filtrage, confettis maison (canvas, zéro dépendance). Respecte `prefers-reduced-motion`.
+Direction artistique « grand titre de presse / maison de luxe » : logo-titre géant, sommaire « Dans ce numéro », lettrine, chapitres numérotés, cartes produit uniformes (photo détourée sur fond neutre, prix en grand), filets fins, grain papier.
 
-Le site cache **23 easter eggs** 🥚 — le carnet secret (pied de page) donne des indices.
+Animations optimisées : uniquement `transform` / `opacity` (composées par le GPU), décor animé sur un seul calque, grain statique, particules sur canvas avec emojis pré-rendus. Respecte `prefers-reduced-motion`.
+
+Le site cache **23 easter eggs** 🥚, tous faisables sur ordinateur **et** sur téléphone. Le carnet secret (pied de page) donne des indices et contient un champ « mot magique ».
 
 ## Développement
 

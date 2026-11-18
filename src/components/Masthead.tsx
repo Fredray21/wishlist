@@ -1,176 +1,219 @@
 "use client";
 
-import { Gift, LogOut } from "lucide-react";
-import { useRef, useState } from "react";
+import { LogOut, Unlock } from "lucide-react";
+import Link from "next/link";
+import { useCallback, useRef, useState } from "react";
+import { formatPrice } from "@/lib/client";
+import type { Theme } from "@/lib/themes";
+import type { PublicItem } from "@/lib/types";
 import { useEggs } from "./fx/EasterEggs";
-import { burst } from "./fx/particles";
+import { useMultiTap } from "./fx/gestures";
+import { burst, sparkle } from "./fx/particles";
 import { CountUp, SplitText } from "./fx/Reveal";
-import { ThemeSwitcher } from "./ThemeSwitcher";
 
 interface Props {
   ownerName: string;
-  birthdayMonth: number | null;
+  theme: Theme;
   isAdmin: boolean;
   onLogout: () => void;
   stats: { label: string; value: number }[];
+  cover: PublicItem[];
 }
 
-const MARQUEE = [
-  "Réservations 100 % secrètes",
-  "Coup de cœur",
-  "Livraison de bonheur offerte",
+const TICKER = [
+  "Réservations strictement confidentielles",
   "Emballage facultatif",
-  "Envie",
+  "Livraison de bonheur offerte",
+  "Pièces choisies avec soin",
   "Pas de chaussettes (sauf jolies)",
-  "Idée",
-  "Fait avec amour",
   "Surprise garantie",
 ];
 
-function Title({ kicker, top, main, bottom }: { kicker: string; top: string; main: string; bottom: string }) {
-  const topLen = top.replace(/ /g, "").length;
-  return (
-    <>
-      <span className="fade-up mb-4 block text-[11px] font-semibold uppercase tracking-[0.35em] text-hero-muted sm:mb-6 sm:text-xs" style={{ "--delay": "0ms" } as React.CSSProperties}>
-        {kicker}
-      </span>
-      <span className="block text-left text-[clamp(1.6rem,4.5vw,3.5rem)] italic leading-none text-hero-muted">
-        <SplitText text={top} />
-      </span>
-      <span className="legend-target block text-[clamp(4.8rem,19vw,15rem)] leading-[0.82]">
-        <SplitText text={main} offset={topLen} />
-      </span>
-      <span className="block text-right text-[clamp(1.6rem,4.5vw,3.5rem)] italic leading-none">
-        <SplitText text={bottom} offset={topLen + main.length} />
-      </span>
-    </>
-  );
-}
+const COPY: Record<Theme, { edition: string; title: string; dek: string }> = {
+  noel: {
+    edition: "Édition d'hiver",
+    title: "La liste de Noël",
+    dek: "Une sélection de pièces désirées, à glisser sous le sapin. Les lutins sont tenus au secret le plus absolu.",
+  },
+  anniversaire: {
+    edition: "Numéro spécial anniversaire",
+    title: "Joyeux anniversaire",
+    dek: "Une bougie de plus, quelques envies en plus. Voici la sélection officielle de l'année.",
+  },
+  minimaliste: {
+    edition: "Collection permanente",
+    title: "La sélection",
+    dek: "Des objets désirés, choisis avec soin. À offrir si l'envie vous prend, sans aucune obligation.",
+  },
+};
 
-export function Masthead({ ownerName, birthdayMonth, isAdmin, onLogout, stats }: Props) {
+export function Masthead({ ownerName, theme, isAdmin, onLogout, stats, cover }: Props) {
   const eggs = useEggs();
-  const logoClicks = useRef(0);
-  const [logoSpin, setLogoSpin] = useState(0);
+  const logoTaps = useRef(0);
+  const [logoBump, setLogoBump] = useState(0);
   const [hatched, setHatched] = useState(false);
   const [scatter, setScatter] = useState(false);
   const [reverse, setReverse] = useState(false);
+  const strokes = useRef(0);
+  const lastSpark = useRef(0);
 
   const now = new Date();
-  const edition = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" }).format(now);
+  const edition = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric", timeZone: "Europe/Paris" }).format(now);
   const issue = String(now.getMonth() + 1).padStart(2, "0");
+  const copy = COPY[theme];
 
   function onLogo(e: React.MouseEvent) {
-    logoClicks.current += 1;
-    setLogoSpin((n) => n + 1);
-    if (logoClicks.current >= 7) {
-      logoClicks.current = 0;
+    logoTaps.current += 1;
+    setLogoBump((n) => n + 1);
+    if (logoTaps.current >= 7) {
+      logoTaps.current = 0;
       setHatched(true);
       eggs.found("logo");
-      burst({ x: e.clientX, y: e.clientY, emojis: ["🥚", "🐣", "🐥"], count: 20, spread: 120, velocity: 9, angle: 60 });
+      burst({ x: e.clientX, y: e.clientY, emojis: ["🥚", "🐣", "🐥"], count: 20, spread: 140, velocity: 9, angle: 90 });
       window.setTimeout(() => setHatched(false), 5000);
     }
   }
 
-  function onTitle() {
-    setScatter(true);
-    eggs.found("scatter");
-    window.setTimeout(() => setScatter(false), 1100);
+  const onTitleTap = useMultiTap(
+    2,
+    useCallback(() => {
+      setScatter(true);
+      eggs.found("scatter");
+      window.setTimeout(() => setScatter(false), 1100);
+    }, [eggs]),
+  );
+
+  /** Poussière de fée : glisser le doigt (ou la souris, bouton enfoncé) sur le titre. */
+  function onTitleMove(e: React.PointerEvent) {
+    const drawing = e.pointerType !== "mouse" || e.buttons === 1;
+    if (!drawing) return;
+    const t = performance.now();
+    if (t - lastSpark.current < 30) return;
+    lastSpark.current = t;
+    sparkle(e.clientX, e.clientY, theme === "noel" ? "❄️" : theme === "anniversaire" ? "✨" : undefined);
+    if (++strokes.current === 30) eggs.found("sparkle");
   }
 
   return (
     <>
-      {/* Barre supérieure */}
-      <div className="flex items-center justify-between gap-3 border-b border-hero/15 py-4 text-hero-muted">
-        <button type="button" onClick={onLogo} className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.35em]" aria-label="Wishlist">
-          <span key={logoSpin} className={logoSpin ? "spin-once inline-flex" : "inline-flex"}>
-            {hatched ? <span className="text-lg leading-none">🐣</span> : <Gift className="size-4" />}
-          </span>
-          Wishlist
-        </button>
-        <span className="hidden text-[11px] font-semibold uppercase tracking-[0.3em] md:block" suppressHydrationWarning>
-          N° {issue} — {edition}
-        </span>
-        <div className="flex items-center gap-2">
-          <ThemeSwitcher birthdayMonth={birthdayMonth} />
-          {isAdmin && (
-            <button
-              type="button"
-              onClick={onLogout}
-              className="flex items-center gap-1.5 rounded-full border border-hero/15 bg-hero/5 px-3 py-1.5 text-xs font-medium text-hero-muted transition hover:bg-hero/10 hover:text-hero"
-              title="Se déconnecter"
-            >
-              <LogOut className="size-3.5" /> <span className="hidden sm:inline">Quitter l&apos;admin</span>
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Couverture */}
-      <header className="pb-10 pt-10 sm:pb-14 sm:pt-16">
-        <h1
-          onDoubleClick={onTitle}
-          className={`font-display mx-auto max-w-5xl select-none text-center text-hero ${scatter ? "scatter" : ""}`}
-          title=""
-        >
-          <span className="theme-only" data-for="noel">
-            <Title kicker={`Édition d'hiver · ${edition}`} top="La liste de" main="Noël" bottom={`de ${ownerName}`} />
-          </span>
-          <span className="theme-only" data-for="anniversaire">
-            <Title kicker="Numéro spécial anniversaire" top="La liste d'" main="Anniv'" bottom={`de ${ownerName}`} />
-          </span>
-          <span className="theme-only" data-for="minimaliste">
-            <Title kicker="Collection permanente" top="La" main="Wishlist" bottom={`de ${ownerName}`} />
-          </span>
-        </h1>
-
-        <p className="fade-up mx-auto mt-8 max-w-xl text-center text-base text-hero-muted sm:text-lg" style={{ "--delay": "700ms" } as React.CSSProperties}>
-          <span className="theme-only" data-for="noel">
-            Quelques idées à glisser sous le sapin. Les lutins sont tenus au secret. ✨
-          </span>
-          <span className="theme-only" data-for="anniversaire">
-            Une bougie de plus, quelques envies en plus. On souffle ? 🎈
-          </span>
-          <span className="theme-only" data-for="minimaliste">
-            Une sélection d&apos;objets désirés, choisis avec soin. Si l&apos;envie vous prend.
-          </span>
-        </p>
-
-        {/* Chiffres clés */}
-        <dl className="fade-up mx-auto mt-10 grid max-w-2xl grid-cols-3 divide-x divide-hero/15 border-y border-hero/15" style={{ "--delay": "850ms" } as React.CSSProperties}>
-          {stats.map((s) => (
-            <div key={s.label} className="px-2 py-4 text-center">
-              <dd className="font-display text-4xl leading-none text-hero sm:text-5xl">
-                <CountUp value={s.value} />
-              </dd>
-              <dt className="mt-2 text-[10px] font-semibold uppercase tracking-[0.28em] text-hero-muted sm:text-[11px]">{s.label}</dt>
-            </div>
-          ))}
-        </dl>
-      </header>
-
-      {/* Bandeau défilant */}
+      {/* Bandeau d'annonce */}
       <button
         type="button"
         onClick={() => {
           setReverse((r) => !r);
           eggs.found("marquee");
         }}
-        className="marquee-wrap relative -mx-4 mb-10 block w-[calc(100%+2rem)] -rotate-1 cursor-pointer overflow-hidden bg-primary py-3 text-primary-ink shadow-lg sm:-mx-6 sm:w-[calc(100%+3rem)]"
-        aria-label="Bandeau"
+        className="marquee-wrap relative -mx-4 block w-[calc(100%+2rem)] overflow-hidden bg-primary py-2 text-primary-ink sm:-mx-6 sm:w-[calc(100%+3rem)]"
+        aria-label="Bandeau d'annonce"
       >
         <div className="marquee" style={{ animationDirection: reverse ? "reverse" : "normal" }}>
-          {[0, 1].map((copy) => (
-            <div key={copy} className="flex shrink-0 items-center" aria-hidden={copy === 1}>
-              {MARQUEE.map((m) => (
-                <span key={m} className="font-display flex items-center whitespace-nowrap px-5 text-lg italic sm:text-xl">
+          {[0, 1].map((copyIndex) => (
+            <div key={copyIndex} className="flex shrink-0 items-center" aria-hidden={copyIndex === 1}>
+              {TICKER.map((m) => (
+                <span key={m} className="eyebrow flex items-center whitespace-nowrap px-6 !text-[10px]">
                   {m}
-                  <span className="pl-10 text-pop not-italic">✦</span>
+                  <span className="pl-12 opacity-60">✦</span>
                 </span>
               ))}
             </div>
           ))}
         </div>
       </button>
+
+      {/* Barre de navigation */}
+      <nav className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 py-4 text-hero-muted">
+        <span className="eyebrow hidden sm:block" suppressHydrationWarning>
+          N° {issue} · {edition}
+        </span>
+        <span className="eyebrow sm:hidden">N° {issue}</span>
+        <span className="eyebrow text-center">{copy.edition}</span>
+        <div className="flex items-center justify-end gap-4">
+          {isAdmin ? (
+            <>
+              <Link href="/admin/reservations" className="eyebrow link-underline hidden items-center gap-1.5 hover:text-hero sm:inline-flex">
+                <Unlock className="size-3" /> Réservations
+              </Link>
+              <button type="button" onClick={onLogout} className="eyebrow link-underline inline-flex items-center gap-1.5 hover:text-hero" title="Se déconnecter">
+                <LogOut className="size-3" /> <span className="hidden sm:inline">Quitter</span>
+              </button>
+            </>
+          ) : (
+            <span className="eyebrow hidden sm:block">Paris</span>
+          )}
+        </div>
+      </nav>
+
+      {/* Logo façon titre de magazine */}
+      <div className="text-center">
+        <button
+          type="button"
+          onClick={onLogo}
+          className="font-display relative inline-block select-none text-[clamp(3.2rem,15vw,10.5rem)] uppercase leading-[0.85] tracking-[0.02em] text-hero"
+          aria-label="Wishlist"
+        >
+          <span key={logoBump} className={logoBump ? "jelly inline-block" : "inline-block"}>
+            Wishlist
+          </span>
+          {hatched && <span className="pop-in absolute -right-6 -top-4 text-4xl">🐣</span>}
+        </button>
+      </div>
+      <div className="rule-double mt-4 text-hero" />
+
+      {/* Couverture */}
+      <header className="grid gap-10 py-10 sm:py-14 lg:grid-cols-12 lg:gap-12">
+        <div className="lg:col-span-8">
+          <p className="eyebrow fade-up text-accent" style={{ "--delay": "0ms" } as React.CSSProperties}>
+            À la une
+          </p>
+          <h1
+            onClick={onTitleTap}
+            onPointerMove={onTitleMove}
+            className={`font-display legend-target mt-4 cursor-default select-none text-[clamp(3rem,9vw,7.5rem)] leading-[0.9] text-hero [touch-action:pan-y] ${scatter ? "scatter" : ""}`}
+          >
+            <SplitText text={copy.title} />
+          </h1>
+          <p className="fade-up mt-6 max-w-xl text-lg leading-relaxed text-hero-muted" style={{ "--delay": "600ms" } as React.CSSProperties}>
+            {copy.dek}
+          </p>
+          <p className="eyebrow fade-up mt-6 flex items-center gap-3 text-hero" style={{ "--delay": "750ms" } as React.CSSProperties}>
+            <span className="h-px w-10 bg-current" /> Par {ownerName}
+          </p>
+        </div>
+
+        {/* Sommaire du numéro */}
+        <aside className="fade-up lg:col-span-4 lg:border-l lg:border-hero/20 lg:pl-10" style={{ "--delay": "450ms" } as React.CSSProperties}>
+          <p className="eyebrow text-hero-muted">Dans ce numéro</p>
+          <ol className="mt-4 divide-y divide-hero/15 border-y border-hero/15">
+            {cover.length === 0 && <li className="py-4 text-sm text-hero-muted">La sélection arrive bientôt.</li>}
+            {cover.map((item, i) => (
+              <li key={item.id}>
+                <a href={`#item-${item.id}`} className="group flex gap-4 py-4">
+                  <span className="font-display tabular text-3xl leading-none text-hero-muted transition group-hover:text-accent">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="eyebrow block text-hero-muted">{item.category}</span>
+                    <span className="font-display mt-1 line-clamp-2 block text-lg leading-snug text-hero">{item.title}</span>
+                    {formatPrice(item.price) && <span className="tabular mt-1 block text-sm text-hero-muted">{formatPrice(item.price)}</span>}
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ol>
+        </aside>
+      </header>
+
+      {/* Chiffres clés */}
+      <dl className="fade-up grid grid-cols-3 border-y border-hero/20" style={{ "--delay": "850ms" } as React.CSSProperties}>
+        {stats.map((s, i) => (
+          <div key={s.label} className={`flex flex-col items-center gap-2 py-6 ${i > 0 ? "border-l border-hero/20" : ""}`}>
+            <dd className="font-display text-4xl leading-none text-hero sm:text-6xl">
+              <CountUp value={s.value} />
+            </dd>
+            <dt className="eyebrow text-hero-muted">{s.label}</dt>
+          </div>
+        ))}
+      </dl>
     </>
   );
 }

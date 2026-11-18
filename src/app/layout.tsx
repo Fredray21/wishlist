@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Bodoni_Moda, Bricolage_Grotesque, Fraunces, Inter } from "next/font/google";
 import { getSiteConfig } from "@/lib/config";
-import { autoTheme, themeBootScript } from "@/lib/themes";
+import { autoTheme, currentMonth } from "@/lib/themes";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
@@ -28,21 +28,24 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const { birthdayMonth } = getSiteConfig();
-  const initialTheme = autoTheme(new Date().getMonth() + 1, birthdayMonth);
+  const theme = autoTheme(currentMonth(), birthdayMonth);
   return (
     <html
       lang="fr"
-      data-theme={initialTheme}
+      data-theme={theme}
       className={`${inter.variable} ${fraunces.variable} ${bodoni.variable} ${bricolage.variable}`}
       suppressHydrationWarning
     >
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeBootScript(birthdayMonth) }} />
-      </head>
       <body className="font-sans antialiased">
-        <div aria-hidden className="decor decor-snow" />
-        <div aria-hidden className="decor decor-confetti" />
-        <div className="relative z-10">{children}</div>
+        {theme !== "minimaliste" && (
+          <div aria-hidden className={`decor ${theme === "noel" ? "decor-snow" : "decor-confetti"}`}>
+            <i />
+            <i />
+          </div>
+        )}
+        <div id="app" className="relative z-10">
+          {children}
+        </div>
       </body>
     </html>
   );

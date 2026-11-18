@@ -1,13 +1,11 @@
 "use client";
 
-import { ArrowUpDown, Euro, Tag } from "lucide-react";
-
 export const PRICE_RANGES = [
   { id: "all", label: "Tous les prix", min: 0, max: Infinity },
   { id: "lt25", label: "Moins de 25 €", min: 0, max: 25 },
-  { id: "25-50", label: "25 € – 50 €", min: 25, max: 50 },
-  { id: "50-100", label: "50 € – 100 €", min: 50, max: 100 },
-  { id: "100-200", label: "100 € – 200 €", min: 100, max: 200 },
+  { id: "25-50", label: "25 – 50 €", min: 25, max: 50 },
+  { id: "50-100", label: "50 – 100 €", min: 50, max: 100 },
+  { id: "100-200", label: "100 – 200 €", min: 100, max: 200 },
   { id: "gt200", label: "Plus de 200 €", min: 200, max: Infinity },
 ] as const;
 
@@ -25,16 +23,15 @@ interface Props {
   onChange: (value: FiltersState) => void;
   categories: string[];
   isAdmin: boolean;
+  counts: { available: number; all: number };
 }
 
-function Select({
-  icon: Icon,
+function LineSelect({
   label,
   value,
   onChange,
   children,
 }: {
-  icon: React.ComponentType<{ className?: string }>;
   label: string;
   value: string;
   onChange: (v: string) => void;
@@ -43,70 +40,73 @@ function Select({
   return (
     <label className="relative flex items-center">
       <span className="sr-only">{label}</span>
-      <Icon className="pointer-events-none absolute left-3 size-4 text-muted" />
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="h-10 appearance-none rounded-theme-sm border border-line bg-surface py-0 pl-9 pr-8 text-sm font-medium text-ink shadow-sm outline-none transition hover:border-muted focus:border-primary"
-      >
+      <select value={value} onChange={(e) => onChange(e.target.value)} className="select-line">
         {children}
       </select>
-      <svg className="pointer-events-none absolute right-3 size-3 text-muted" viewBox="0 0 12 12" aria-hidden>
-        <path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.6" />
+      <svg className="pointer-events-none absolute right-0 size-2.5 text-muted" viewBox="0 0 12 12" aria-hidden>
+        <path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.4" />
       </svg>
     </label>
   );
 }
 
-export function Filters({ value, onChange, categories, isAdmin }: Props) {
+export function Filters({ value, onChange, categories, isAdmin, counts }: Props) {
   const set = <K extends keyof FiltersState>(key: K, v: FiltersState[K]) => onChange({ ...value, [key]: v });
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      {!isAdmin && (
-        <div role="radiogroup" aria-label="Disponibilité" className="flex h-10 rounded-theme-sm border border-line bg-surface p-1 shadow-sm">
+    <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between md:gap-3">
+      {!isAdmin ? (
+        <div role="radiogroup" aria-label="Disponibilité" className="flex items-center gap-6">
           {(
             [
-              ["available", "Disponibles"],
-              ["all", "Tous"],
+              ["available", "Disponibles", counts.available],
+              ["all", "Tous", counts.all],
             ] as const
-          ).map(([id, label]) => (
+          ).map(([id, label, n]) => (
             <button
               key={id}
               type="button"
               role="radio"
               aria-checked={value.availability === id}
               onClick={() => set("availability", id)}
-              className={`rounded-theme-sm px-3 text-sm font-medium transition ${
-                value.availability === id ? "bg-primary text-primary-ink shadow-sm" : "text-muted hover:text-ink"
-              }`}
+              className={`eyebrow relative py-2 transition ${value.availability === id ? "text-ink" : "text-muted hover:text-ink"}`}
             >
-              {label}
+              {label} <span className="tabular opacity-60">({n})</span>
+              <span
+                className={`absolute inset-x-0 -bottom-px h-px origin-left bg-ink transition-transform duration-300 ${
+                  value.availability === id ? "scale-x-100" : "scale-x-0"
+                }`}
+              />
             </button>
           ))}
         </div>
+      ) : (
+        <span className="eyebrow text-muted">Toute la sélection ({counts.all})</span>
       )}
-      <Select icon={Tag} label="Catégorie" value={value.category} onChange={(v) => set("category", v)}>
-        <option value="all">Toutes catégories</option>
-        {categories.map((c) => (
-          <option key={c} value={c}>
-            {c}
-          </option>
-        ))}
-      </Select>
-      <Select icon={Euro} label="Prix" value={value.price} onChange={(v) => set("price", v as FiltersState["price"])}>
-        {PRICE_RANGES.map((r) => (
-          <option key={r.id} value={r.id}>
-            {r.label}
-          </option>
-        ))}
-      </Select>
-      <Select icon={ArrowUpDown} label="Trier" value={value.sort} onChange={(v) => set("sort", v as Sort)}>
-        <option value="priority">Par priorité</option>
-        <option value="price-asc">Prix croissant</option>
-        <option value="price-desc">Prix décroissant</option>
-        <option value="recent">Plus récents</option>
-      </Select>
+
+      <div className="-mx-4 flex items-center gap-x-6 overflow-x-auto whitespace-nowrap px-4 pb-1 [scrollbar-width:none] md:mx-0 md:overflow-visible md:px-0 md:pb-0">
+        <LineSelect label="Catégorie" value={value.category} onChange={(v) => set("category", v)}>
+          <option value="all">Toutes catégories</option>
+          {categories.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </LineSelect>
+        <LineSelect label="Prix" value={value.price} onChange={(v) => set("price", v as FiltersState["price"])}>
+          {PRICE_RANGES.map((r) => (
+            <option key={r.id} value={r.id}>
+              {r.label}
+            </option>
+          ))}
+        </LineSelect>
+        <LineSelect label="Trier" value={value.sort} onChange={(v) => set("sort", v as Sort)}>
+          <option value="priority">Par priorité</option>
+          <option value="price-asc">Prix croissant</option>
+          <option value="price-desc">Prix décroissant</option>
+          <option value="recent">Nouveautés</option>
+        </LineSelect>
+      </div>
     </div>
   );
 }

@@ -17,13 +17,15 @@ describe("toPublicItem (anti-spoiler)", () => {
   it("n'émet jamais la clé reserved pour l'admin", () => {
     const view = toPublicItem(reserved, true);
     expect("reserved" in view).toBe(false);
+    expect("reservedBy" in view).toBe(false);
     expect(JSON.stringify(view)).not.toMatch(/reserv|Léa|secret|codeHash|tokenHash/i);
   });
 
-  it("indique seulement un booléen aux visiteurs, sans détails", () => {
+  it("montre le pseudo aux visiteurs, sans la note ni les empreintes", () => {
     const view = toPublicItem(reserved, false);
     expect(view.reserved).toBe(true);
-    expect(JSON.stringify(view)).not.toMatch(/Léa|secret|codeHash|tokenHash/);
+    expect(view.reservedBy).toBe("Léa");
+    expect(JSON.stringify(view)).not.toMatch(/secret|codeHash|tokenHash/);
   });
 
   it("un article reçu n'est jamais marqué réservé", () => {
