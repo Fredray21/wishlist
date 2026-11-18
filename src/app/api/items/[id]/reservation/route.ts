@@ -42,6 +42,8 @@ export async function POST(req: NextRequest, { params }: Ctx) {
   }
   const { id } = await params;
   const body = await readJson(req);
+  const name = cleanText(body.name, 30);
+  if (!name || name.length < 2) return error("Indiquez votre prénom ou pseudo (2 caractères minimum).", 400);
   const code = generateCode();
   const token = generateToken();
 
@@ -52,7 +54,7 @@ export async function POST(req: NextRequest, { params }: Ctx) {
       if (found.received) throw new HttpError("Ce cadeau a déjà été reçu.", 409);
       if (found.reservation) throw new HttpError("Ce cadeau vient d'être réservé par quelqu'un d'autre.", 409);
       found.reservation = {
-        name: cleanText(body.name, 60),
+        name,
         note: cleanText(body.note, 500),
         codeHash: hashCode(found.id, code),
         tokenHash: hashToken(token),

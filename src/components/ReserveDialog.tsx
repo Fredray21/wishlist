@@ -70,26 +70,29 @@ export function ReserveDialog({ item, ownerName, onClose, onReserved, onConflict
       {item && !code && (
         <form onSubmit={submit} className="space-y-4">
           <p className="text-sm text-muted">
-            Vous réservez <strong className="text-ink">{item.title}</strong>. Les autres verront simplement « Déjà
-            réservé ».
+            Vous réservez <strong className="text-ink">{item.title}</strong>. Les autres visiteurs verront « Réservé
+            par {name.trim() || "…"} », pour éviter les doublons.
           </p>
           <SpoilerNotice ownerName={ownerName} compact />
           <label className="block space-y-1.5">
             <span className="text-sm font-medium">
-              Votre prénom <span className="font-normal text-muted">(optionnel)</span>
+              Votre prénom ou pseudo <span className="text-primary">*</span>
             </span>
             <input
               className="field"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              maxLength={60}
+              required
+              minLength={2}
+              maxLength={30}
               autoComplete="given-name"
               placeholder="Ex. Camille"
             />
+            <span className="block text-xs text-muted">Visible par les autres visiteurs, jamais par {ownerName}.</span>
           </label>
           <label className="block space-y-1.5">
             <span className="text-sm font-medium">
-              Une note <span className="font-normal text-muted">(optionnel, jamais montrée à {ownerName})</span>
+              Une note <span className="font-normal text-muted">(optionnelle, privée : personne ne la voit)</span>
             </span>
             <textarea
               className="field min-h-20 resize-y"
@@ -101,13 +104,13 @@ export function ReserveDialog({ item, ownerName, onClose, onReserved, onConflict
           </label>
           {err && <p className="rounded-theme-sm bg-danger/10 px-3 py-2 text-sm text-danger">{err}</p>}
           <div className="flex justify-end gap-2 pt-1">
-            <button type="button" onClick={close} className="rounded-theme-sm px-4 py-2.5 text-sm font-medium text-muted hover:bg-surface-2">
+            <button type="button" onClick={close} className="btn-ghost">
               Annuler
             </button>
             <button
               type="submit"
-              disabled={pending}
-              className="flex items-center gap-2 rounded-theme-sm bg-primary px-4 py-2.5 text-sm font-semibold text-primary-ink transition hover:brightness-110 disabled:opacity-60"
+              disabled={pending || name.trim().length < 2}
+              className="btn-primary"
             >
               {pending ? <Loader2 className="size-4 animate-spin" /> : <Gift className="size-4" />}
               Confirmer la réservation
@@ -154,7 +157,7 @@ export function ReserveDialog({ item, ownerName, onClose, onReserved, onConflict
           <button
             type="button"
             onClick={close}
-            className="w-full rounded-theme-sm bg-primary px-4 py-2.5 text-sm font-semibold text-primary-ink transition hover:brightness-110"
+            className="btn-primary"
           >
             J&apos;ai noté mon code
           </button>

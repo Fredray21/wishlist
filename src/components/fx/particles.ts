@@ -47,6 +47,24 @@ let ctx: CanvasRenderingContext2D | null = null;
 let particles: Particle[] = [];
 let raf = 0;
 let dpr = 1;
+const MAX_PARTICLES = 320;
+const emojiCache = new Map<string, HTMLCanvasElement>();
+
+/** Emoji pré-rendu une fois sur un petit canvas (fillText à chaque image est très coûteux). */
+function emojiSprite(emoji: string): HTMLCanvasElement {
+  let sprite = emojiCache.get(emoji);
+  if (!sprite) {
+    sprite = document.createElement("canvas");
+    sprite.width = sprite.height = 64;
+    const c = sprite.getContext("2d")!;
+    c.font = '52px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+    c.textAlign = "center";
+    c.textBaseline = "middle";
+    c.fillText(emoji, 32, 36);
+    emojiCache.set(emoji, sprite);
+  }
+  return sprite;
+}
 
 function reducedMotion() {
   return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -65,10 +83,10 @@ function ensureCanvas() {
     zIndex: "70",
   });
   document.body.appendChild(canvas);
-  ctx = canvas.getContext("2d");
+  ctx = canvas.getContext("2d", { alpha: true, desynchronized: true });
   const resize = () => {
     if (!canvas) return;
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    dpr = Math.min(window.devicePixelRatio || 1, 1.5);
     canvas.width = window.innerWidth * dpr;
     canvas.height = window.innerHeight * dpr;
   };
@@ -78,7 +96,7 @@ function ensureCanvas() {
 
 function tick() {
   if (!ctx || !canvas) return;
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   const h = window.innerHeight;
 
@@ -92,15 +110,12 @@ function tick() {
     p.rot += p.vr;
     const fade = Math.min(1, (p.maxLife - p.life) / 30);
 
-    ctx.save();
     ctx.globalAlpha = fade;
-    ctx.translate(p.x, p.y);
-    ctx.rotate(p.rot);
+    const cos = Math.cos(p.rot) * dpr;
+    const sin = Math.sin(p.rot) * dpr;
+    ctx.setTransform(cos, sin, -sin, cos, p.x * dpr, p.y * dpr);
     if (p.emoji) {
-      ctx.font = `${p.size}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(p.emoji, 0, 0);
+      ctx.drawImage(emojiSprite(p.emoji), -p.size / 2, -p.size / 2, p.size, p.size);
     } else {
       ctx.fillStyle = p.color;
       if (p.shape === "circle") {
@@ -115,14 +130,19 @@ function tick() {
         ctx.fillRect(-p.size / 2, -p.size / 3, p.size, (p.size * 2) / 3);
       }
     }
-    ctx.restore();
   }
+  ctx.globalAlpha = 1;
 
   if (particles.length) raf = requestAnimationFrame(tick);
   else {
     raf = 0;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
   }
+}
+
+function room() {
+  return MAX_PARTICLES - particles.length;
 }
 
 function start() {
@@ -149,7 +169,7 @@ export function burst(opts: BurstOptions = {}) {
     size = 10,
     life = 180,
   } = opts;
-  for (let i = 0; i < Math.min(count, 400); i++) {
+  for (let i = 0; i < Math.min(count, room()); i++) {
     const a = ((angle + rand(-spread / 2, spread / 2)) * Math.PI) / 180;
     const v = velocity * rand(0.45, 1.1);
     particles.push({
@@ -180,7 +200,7 @@ export function rain(opts: { duration?: number; emojis?: string[]; colors?: stri
   const { duration = 4000, emojis, colors = DEFAULT_COLORS, density = 6, snow = false } = opts;
   const end = performance.now() + duration;
   const spawn = () => {
-    for (let i = 0; i < density; i++) {
+    for (let i = 0; i < Math.min(density, room()); i++) {
       particles.push({
         x: rand(-20, window.innerWidth + 20),
         y: -20,

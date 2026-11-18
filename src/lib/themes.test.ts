@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { autoTheme, resolveTheme } from "./themes";
+import { autoTheme, currentMonth } from "./themes";
 
 describe("autoTheme", () => {
   it("Noël en novembre, décembre et janvier", () => {
@@ -15,8 +15,7 @@ describe("autoTheme", () => {
     expect(autoTheme(12, 1)).toBe("noel");
     expect(autoTheme(1, 1)).toBe("anniversaire");
   });
-  it("un choix manuel l'emporte", () => {
-    expect(resolveTheme("minimaliste", 12, null)).toBe("minimaliste");
-    expect(resolveTheme("auto", 12, null)).toBe("noel");
+  it("utilise l'heure de Paris", () => {
+    expect(currentMonth(new Date("2026-11-30T23:30:00Z"))).toBe(12);
   });
 });

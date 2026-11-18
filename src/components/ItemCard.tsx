@@ -1,28 +1,17 @@
 "use client";
 
-import {
-  ArrowUpRight,
-  CheckCircle2,
-  Gift,
-  Heart,
-  Lightbulb,
-  Lock,
-  Pencil,
-  RotateCcw,
-  Star,
-  Trash2,
-  Undo2,
-} from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { ArrowUpRight, Check, Gift, Heart, Lightbulb, Lock, Pencil, RotateCcw, Star, Trash2, Undo2 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { formatPrice, type LocalReservation } from "@/lib/client";
 import { PRIORITY_LABELS, type Priority, type PublicItem } from "@/lib/types";
 import { useEggs } from "./fx/EasterEggs";
+import { useMultiTap } from "./fx/gestures";
 import { burst, themeColors } from "./fx/particles";
 
-const PRIORITY_STYLE: Record<Priority, { icon: React.ComponentType<{ className?: string }>; className: string }> = {
-  "coup-de-coeur": { icon: Heart, className: "bg-primary text-primary-ink" },
-  envie: { icon: Star, className: "bg-accent text-accent-ink" },
-  idee: { icon: Lightbulb, className: "bg-surface text-ink" },
+const PRIORITY_ICON: Record<Priority, React.ComponentType<{ className?: string }>> = {
+  "coup-de-coeur": Heart,
+  envie: Star,
+  idee: Lightbulb,
 };
 
 const PRICE_JOKES = [
@@ -34,7 +23,6 @@ const PRICE_JOKES = [
 export interface ItemCardProps {
   item: PublicItem;
   index: number;
-  featured?: boolean;
   isAdmin: boolean;
   mine?: LocalReservation;
   busy?: boolean;
@@ -46,17 +34,20 @@ export interface ItemCardProps {
   onDelete?: () => void;
 }
 
-export function PriorityBadge({ priority }: { priority: Priority }) {
-  const { icon: Icon, className } = PRIORITY_STYLE[priority];
+export function PriorityLabel({ priority }: { priority: Priority }) {
+  const Icon = PRIORITY_ICON[priority];
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] shadow-sm ${className}`}>
-      <Icon className={`size-3.5 ${priority === "coup-de-coeur" ? "animate-pulse" : ""}`} />
-      {PRIORITY_LABELS[priority]}
+    <span
+      className={`eyebrow inline-flex items-center gap-1.5 whitespace-nowrap ${priority === "coup-de-coeur" ? "text-primary" : "text-muted"}`}
+      title={PRIORITY_LABELS[priority]}
+    >
+      <Icon className={`size-3 ${priority === "coup-de-coeur" ? "fill-current" : ""}`} />
+      <span className="hidden sm:inline">{PRIORITY_LABELS[priority]}</span>
     </span>
   );
 }
 
-function ItemImage({ item, featured }: { item: PublicItem; featured?: boolean }) {
+function ItemImage({ item }: { item: PublicItem }) {
   const [failed, setFailed] = useState(false);
   const img = useRef<HTMLImageElement>(null);
   useEffect(() => {
@@ -64,16 +55,14 @@ function ItemImage({ item, featured }: { item: PublicItem; featured?: boolean })
     const el = img.current;
     if (el && el.complete && el.naturalWidth === 0) setFailed(true);
   }, [item.imageUrl]);
+
   if (!item.imageUrl || failed) {
     return (
-      <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-surface-2">
-        <span
-          aria-hidden
-          className={`font-display pointer-events-none absolute select-none leading-none text-ink/[0.06] ${featured ? "text-[16rem]" : "text-[10rem]"}`}
-        >
+      <div className="flex h-full w-full items-center justify-center">
+        <span aria-hidden className="font-display select-none text-[7rem] leading-none text-ink/[0.07]">
           {item.title.charAt(0)}
         </span>
-        <Gift className="relative size-12 text-muted/60 transition duration-500 group-hover:-rotate-12 group-hover:scale-110" strokeWidth={1.1} />
+        <Gift className="absolute size-9 text-muted/60" strokeWidth={1} />
       </div>
     );
   }
@@ -84,19 +73,19 @@ function ItemImage({ item, featured }: { item: PublicItem; featured?: boolean })
       src={item.imageUrl}
       alt=""
       loading="lazy"
+      decoding="async"
       referrerPolicy="no-referrer"
       onError={() => setFailed(true)}
-      className="h-full w-full object-cover transition duration-700 ease-out group-hover:scale-[1.06]"
+      className="h-full w-full object-contain p-4 mix-blend-multiply sm:p-8"
     />
   );
 }
 
 export function ItemCard(props: ItemCardProps) {
-  const { item, index, featured, isAdmin, mine, busy } = props;
+  const { item, index, isAdmin, mine, busy } = props;
   const { found, stage } = useEggs();
-  const ref = useRef<HTMLElement>(null);
-  const imgRef = useRef<HTMLDivElement>(null);
-  const priceClicks = useRef(0);
+  const mediaRef = useRef<HTMLDivElement>(null);
+  const priceTaps = useRef(0);
   const [jelly, setJelly] = useState(false);
 
   const price = formatPrice(item.price);
@@ -104,217 +93,151 @@ export function ItemCard(props: ItemCardProps) {
   const reservedByOther = reserved && !mine;
   const number = String(index + 1).padStart(2, "0");
 
-  function onMove(e: React.PointerEvent) {
-    if (e.pointerType !== "mouse" || !ref.current) return;
-    const r = ref.current.getBoundingClientRect();
-    const px = (e.clientX - r.left) / r.width;
-    const py = (e.clientY - r.top) / r.height;
-    ref.current.style.setProperty("--ry", `${(px - 0.5) * 7}deg`);
-    ref.current.style.setProperty("--rx", `${(0.5 - py) * 7}deg`);
-    ref.current.style.setProperty("--gx", `${px * 100}%`);
-    ref.current.style.setProperty("--gy", `${py * 100}%`);
-  }
-
-  function onLeave() {
-    ref.current?.style.setProperty("--rx", "0deg");
-    ref.current?.style.setProperty("--ry", "0deg");
-  }
-
-  function onPriceClick(e: React.MouseEvent) {
+  function onPrice(e: React.MouseEvent) {
     setJelly(false);
     requestAnimationFrame(() => setJelly(true));
-    priceClicks.current += 1;
-    if (priceClicks.current === 5) {
-      priceClicks.current = 0;
+    priceTaps.current += 1;
+    if (priceTaps.current >= 5) {
+      priceTaps.current = 0;
       found("price");
-      burst({ x: e.clientX, y: e.clientY, emojis: ["💶", "🪙", "💸"], count: 26, spread: 140, velocity: 10 });
+      burst({ x: e.clientX, y: e.clientY, emojis: ["💶", "🪙", "💸"], count: 24, spread: 140, velocity: 10 });
       stage("💸", PRICE_JOKES[Math.floor(Math.random() * PRICE_JOKES.length)]);
     }
   }
 
-  function onUnwrap(e: React.MouseEvent) {
-    found("unwrap");
-    imgRef.current?.classList.remove("wiggle");
-    void imgRef.current?.offsetWidth;
-    imgRef.current?.classList.add("wiggle");
-    burst({ x: e.clientX, y: e.clientY, emojis: ["💖", "💝", "✨"], count: 18, spread: 160, velocity: 9, gravity: 0.2 });
-  }
-
-  function reserve(e: React.MouseEvent) {
-    burst({ x: e.clientX, y: e.clientY, count: 30, spread: 100, velocity: 9, colors: themeColors(), size: 7 });
-    props.onReserve?.();
-  }
+  const onMediaTap = useMultiTap(
+    2,
+    useCallback(
+      (e: React.MouseEvent) => {
+        found("unwrap");
+        const el = mediaRef.current;
+        el?.classList.remove("wiggle");
+        void el?.offsetWidth;
+        el?.classList.add("wiggle");
+        burst({ x: e.clientX, y: e.clientY, emojis: ["💖", "💝", "✨"], count: 16, spread: 160, velocity: 9, gravity: 0.2 });
+      },
+      [found],
+    ),
+  );
 
   return (
-    <article
-      ref={ref}
-      onPointerMove={onMove}
-      onPointerLeave={onLeave}
-      className="tilt group relative flex h-full flex-col overflow-hidden rounded-theme border border-line bg-surface text-ink shadow-[0_1px_0_rgba(0,0,0,0.04)] hover:shadow-2xl"
-    >
-      <div
-        ref={imgRef}
-        onDoubleClick={onUnwrap}
-        className={`relative overflow-hidden ${featured ? "aspect-[4/3] lg:aspect-auto lg:flex-1" : "aspect-[4/5]"} ${
-          item.received ? "grayscale-[70%]" : ""
-        }`}
-      >
-        <ItemImage item={item} featured={featured} />
-        <div className="glare pointer-events-none absolute inset-0" />
-
-        {/* Numéro façon lookbook */}
-        <span
-          aria-hidden
-          className={`font-display pointer-events-none absolute bottom-2 right-3 leading-none text-white mix-blend-difference ${
-            featured ? "text-8xl" : "text-6xl"
-          } opacity-80 transition duration-500 group-hover:-translate-y-1`}
-        >
-          {number}
-        </span>
-
-        <div className="absolute inset-x-3 top-3 flex items-start justify-between gap-2">
-          <PriorityBadge priority={item.priority} />
-          {price && (
-            <button
-              type="button"
-              onClick={onPriceClick}
-              onAnimationEnd={() => setJelly(false)}
-              className={`tabular rounded-full bg-surface/95 px-3 py-1 text-sm font-bold text-ink shadow-sm backdrop-blur transition hover:scale-105 ${jelly ? "jelly" : ""}`}
-              aria-label={`Prix : ${price}`}
-            >
-              {price}
-            </button>
-          )}
+    <article id={`item-${item.id}`} className="card group flex h-full scroll-mt-28 flex-col border border-line bg-surface text-ink transition-colors duration-300 hover:border-ink/40">
+      {/* Photo : format identique pour toutes les cartes */}
+      <div className="card-media relative aspect-[4/5] overflow-hidden bg-surface-2" onClick={onMediaTap}>
+        <div ref={mediaRef} className={`h-full w-full ${item.received ? "opacity-60 grayscale" : ""}`}>
+          <ItemImage item={item} />
         </div>
 
+        <div className="absolute inset-x-0 top-0 flex items-start justify-between p-3">
+          <span className="bg-surface px-2 py-1">
+            <PriorityLabel priority={item.priority} />
+          </span>
+          <span className="eyebrow tabular hidden text-muted sm:inline">N°{number}</span>
+        </div>
+
+        {/* Statut en bandeau bas */}
         {item.received && (
-          <div className="absolute inset-0 flex items-center justify-center bg-surface/30">
-            <span className="flex -rotate-6 items-center gap-1.5 border-2 border-success bg-surface/90 px-4 py-1.5 text-sm font-black uppercase tracking-[0.25em] text-success shadow-lg">
-              <CheckCircle2 className="size-4" /> Reçu
-            </span>
+          <div className="eyebrow absolute inset-x-0 bottom-0 flex items-center justify-center gap-2 bg-success py-2.5 text-white">
+            <Check className="size-3.5" /> Déjà reçu
           </div>
         )}
         {reservedByOther && (
-          <div className="absolute bottom-3 left-3">
-            <span className="flex items-center gap-1.5 rounded-full bg-reserved px-3 py-1 text-xs font-semibold text-white shadow">
-              <Lock className="size-3.5" /> Déjà réservé
+          <div className="eyebrow absolute inset-x-0 bottom-0 flex items-center justify-center gap-2 bg-reserved px-2 py-2.5 !tracking-[0.16em] text-white">
+            <Lock className="size-3 shrink-0" />
+            <span className="truncate">
+              <span className="hidden sm:inline">Réservé </span>par {item.reservedBy}
             </span>
           </div>
         )}
         {reserved && mine && (
-          <div className="absolute bottom-3 left-3">
-            <span className="flex items-center gap-1.5 rounded-full bg-success px-3 py-1 text-xs font-semibold text-white shadow">
-              <Gift className="size-3.5" /> Réservé par vous
+          <div className="eyebrow absolute inset-x-0 bottom-0 flex items-center justify-center gap-2 bg-success px-2 py-2.5 !tracking-[0.16em] text-white">
+            <Gift className="size-3 shrink-0" />
+            <span className="truncate">
+              Par vous · code <span className="font-mono">{mine.code}</span>
             </span>
           </div>
         )}
       </div>
 
-      <div className={`flex flex-col gap-3 ${featured ? "p-6 sm:p-7" : "p-5"}`}>
-        <div className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-muted">
-          <span className="tabular">N° {number}</span>
-          <span className="h-px flex-1 bg-line" />
-          <span>{item.category}</span>
+      {/* Texte */}
+      <div className="flex flex-1 flex-col p-3 sm:p-5">
+        <p className="eyebrow truncate text-muted">{item.category}</p>
+        <h3 className="font-display mt-2 line-clamp-2 min-h-[2.5em] text-base leading-[1.25] sm:text-xl" title={item.title}>
+          {item.title}
+        </h3>
+        {item.note && <p className="mt-2 line-clamp-2 hidden text-sm leading-relaxed text-muted sm:block">{item.note}</p>}
+
+        {/* Prix + lien */}
+        <div className="mt-auto flex items-end justify-between gap-2 border-t border-line pt-3 sm:pt-4">
+          {price ? (
+            <button
+              type="button"
+              onClick={onPrice}
+              onAnimationEnd={() => setJelly(false)}
+              className={`font-display tabular origin-left text-xl leading-none text-ink sm:text-[1.75rem] ${jelly ? "jelly" : ""}`}
+              aria-label={`Prix : ${price}`}
+            >
+              {price}
+            </button>
+          ) : (
+            <span className="eyebrow text-muted">Prix libre</span>
+          )}
+          {item.url && (
+            <a
+              href={item.url}
+              target="_blank"
+              rel="noopener noreferrer nofollow"
+              className="eyebrow link-underline inline-flex shrink-0 items-center gap-1 text-ink"
+            >
+              Voir <ArrowUpRight className="size-3.5" />
+            </a>
+          )}
         </div>
 
-        <h3 className={`font-display leading-[1.05] ${featured ? "text-3xl sm:text-4xl" : "text-xl"}`}>{item.title}</h3>
-        {item.note && (
-          <p className={`whitespace-pre-line text-muted ${featured ? "text-base" : "text-sm"} ${item.received ? "line-through decoration-1" : ""}`}>
-            {item.note}
-          </p>
-        )}
-
-        {item.url && (
-          <a
-            href={item.url}
-            target="_blank"
-            rel="noopener noreferrer nofollow"
-            className="group/link inline-flex w-fit items-center gap-1 text-sm font-semibold text-ink"
-          >
-            <span className="bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-left-bottom bg-no-repeat pb-0.5 transition-[background-size] duration-300 group-hover/link:bg-[length:100%_1px]">
-              Voir le produit
-            </span>
-            <ArrowUpRight className="size-4 transition group-hover/link:-translate-y-0.5 group-hover/link:translate-x-0.5" />
-          </a>
-        )}
-
-        <div className="mt-auto pt-1">
+        {/* Actions */}
+        <div className="mt-3 sm:mt-4">
           {isAdmin ? (
-            <div className="flex items-center gap-2">
+            <div className="flex gap-1.5 sm:gap-2">
               <button
                 type="button"
                 disabled={busy}
                 onClick={(e) => {
-                  if (!item.received) burst({ x: e.clientX, y: e.clientY, count: 50, spread: 120, velocity: 11, colors: themeColors() });
+                  if (!item.received) burst({ x: e.clientX, y: e.clientY, count: 40, spread: 120, velocity: 10, colors: themeColors() });
                   props.onToggleReceived?.();
                 }}
-                className={`flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-theme-sm px-3 py-2.5 text-sm font-semibold transition active:scale-95 disabled:opacity-50 ${
-                  item.received ? "border border-line bg-surface-2 text-ink hover:bg-line" : "bg-success text-white hover:brightness-110"
-                }`}
+                className={`${item.received ? "btn-outline" : "btn-primary"} flex-1 whitespace-nowrap`}
               >
-                {item.received ? <RotateCcw className="size-4" /> : <CheckCircle2 className="size-4" />}
-                {item.received ? "Pas encore reçu" : "Marquer reçu"}
+                {item.received ? <RotateCcw className="size-3.5" /> : <Check className="size-3.5" />}
+                {item.received ? "Pas reçu" : "Reçu"}
               </button>
-              <button
-                type="button"
-                onClick={props.onEdit}
-                className="rounded-theme-sm border border-line p-2.5 text-muted transition hover:rotate-6 hover:bg-surface-2 hover:text-ink"
-                aria-label={`Modifier ${item.title}`}
-                title="Modifier"
-              >
-                <Pencil className="size-4" />
+              <button type="button" onClick={props.onEdit} className="btn-outline !px-2.5 sm:!px-3" aria-label={`Modifier ${item.title}`} title="Modifier">
+                <Pencil className="size-3.5" />
               </button>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={props.onDelete}
-                className="rounded-theme-sm border border-line p-2.5 text-muted transition hover:-rotate-6 hover:border-danger hover:bg-danger hover:text-white disabled:opacity-50"
-                aria-label={`Supprimer ${item.title}`}
-                title="Supprimer"
-              >
-                <Trash2 className="size-4" />
+              <button type="button" disabled={busy} onClick={props.onDelete} className="btn-outline !px-2.5 hover:!border-danger hover:!bg-danger sm:!px-3" aria-label={`Supprimer ${item.title}`} title="Supprimer">
+                <Trash2 className="size-3.5" />
               </button>
             </div>
-          ) : item.received ? null : reserved && mine ? (
-            <div className="space-y-2">
-              <p className="rounded-theme-sm bg-surface-2 px-3 py-2 text-center text-xs text-muted">
-                Votre code d&apos;annulation :{" "}
-                <strong className="font-mono text-sm tracking-[0.3em] text-ink">{mine.code}</strong>
-              </p>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={props.onCancelMine}
-                className="flex w-full items-center justify-center gap-2 rounded-theme-sm border border-line px-3 py-2.5 text-sm font-semibold transition hover:bg-surface-2 active:scale-[0.98] disabled:opacity-50"
-              >
-                <Undo2 className="size-4" /> Annuler ma réservation
-              </button>
-            </div>
+          ) : item.received ? (
+            <p className="eyebrow flex h-11 items-center justify-center text-muted">Merci à vous ♥</p>
+          ) : reserved && mine ? (
+            <button type="button" disabled={busy} onClick={props.onCancelMine} className="btn-outline w-full">
+              <Undo2 className="size-3.5" /> Annuler<span className="hidden sm:inline"> ma réservation</span>
+            </button>
           ) : reservedByOther ? (
-            <div className="space-y-1.5">
-              <button
-                type="button"
-                disabled
-                className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-theme-sm bg-surface-2 px-3 py-2.5 text-sm font-semibold text-muted"
-              >
-                <Lock className="size-4" /> Déjà réservé
-              </button>
-              <button
-                type="button"
-                onClick={props.onCancelWithCode}
-                className="w-full text-center text-xs text-muted underline-offset-4 hover:text-ink hover:underline"
-              >
-                C&apos;est vous ? Annuler ma réservation
-              </button>
-            </div>
+            <button type="button" onClick={props.onCancelWithCode} className="btn-outline w-full text-muted" title="Vous avez réservé ce cadeau ? Annulez avec votre code">
+              <Lock className="size-3.5" /> C&apos;est vous ?
+            </button>
           ) : (
             <button
               type="button"
               disabled={busy}
-              onClick={reserve}
-              className="btn-fill group/btn flex w-full items-center justify-center gap-2 rounded-theme-sm bg-primary px-3 py-3 text-sm font-semibold uppercase tracking-[0.14em] text-primary-ink shadow-sm transition active:scale-[0.98] disabled:opacity-50"
+              onClick={(e) => {
+                burst({ x: e.clientX, y: e.clientY, count: 24, spread: 100, velocity: 8, colors: themeColors(), size: 7 });
+                props.onReserve?.();
+              }}
+              className="btn-primary w-full"
             >
-              <Gift className="size-4 transition group-hover/btn:-rotate-12 group-hover/btn:scale-125" /> Réserver ce cadeau
+              <Gift className="size-3.5" /> Réserver<span className="hidden sm:inline"> ce cadeau</span>
             </button>
           )}
         </div>

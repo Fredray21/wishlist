@@ -56,7 +56,7 @@ export function LoginForm({ configured }: { configured: boolean }) {
       <button
         type="submit"
         disabled={pending || !configured}
-        className="flex w-full items-center justify-center gap-2 rounded-theme-sm bg-primary px-4 py-2.5 text-sm font-semibold text-primary-ink transition hover:brightness-110 disabled:opacity-60"
+        className="btn-primary"
       >
         {pending && <Loader2 className="size-4 animate-spin" />}
         Se connecter

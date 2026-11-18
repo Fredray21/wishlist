@@ -8,28 +8,28 @@ import { burst, cannons, fireworks, rain, sparkle, themeColors } from "./particl
    ====================================================================== */
 
 export const EGGS = [
-  { id: "konami", emoji: "🕹️", label: "Code Konami", hint: "↑ ↑ ↓ ↓ ← → ← → B A" },
-  { id: "neige", emoji: "❄️", label: "Blizzard", hint: "Tape un mot qui tombe du ciel en hiver" },
-  { id: "fete", emoji: "🎉", label: "C'est la fête", hint: "Tape « fête »" },
-  { id: "cadeau", emoji: "🎁", label: "Pluie de paquets", hint: "Tape le mot le plus important du site" },
-  { id: "chut", emoji: "🤫", label: "Mode murmure", hint: "Tape le premier mot du bandeau" },
-  { id: "disco", emoji: "🪩", label: "Disco inferno", hint: "Tape un style musical à paillettes" },
-  { id: "flip", emoji: "🙃", label: "Tête en bas", hint: "Tape « flip »" },
-  { id: "owner", emoji: "👋", label: "Coucou toi", hint: "Tape le prénom du propriétaire" },
-  { id: "logo", emoji: "🐣", label: "L'œuf dans le paquet", hint: "Le logo adore les clics…" },
-  { id: "scatter", emoji: "🔤", label: "Lettres en vadrouille", hint: "Double-clique le grand titre" },
-  { id: "marquee", emoji: "⏪", label: "Rembobinage", hint: "Clique sur le bandeau défilant" },
-  { id: "price", emoji: "💸", label: "Le prix du cœur", hint: "Clique 5 fois sur un prix" },
-  { id: "unwrap", emoji: "💝", label: "Déballage", hint: "Double-clique une photo" },
-  { id: "promise", emoji: "🤞", label: "Promis, juré", hint: "Le 🤫 a un secret (3 clics)" },
-  { id: "lock", emoji: "🔒", label: "Trop curieux·se", hint: "Garde la souris sur le cadenas" },
-  { id: "tab", emoji: "🥹", label: "Le retour", hint: "Va voir un autre onglet, puis reviens" },
-  { id: "idle", emoji: "💤", label: "La sieste", hint: "Ne touche plus à rien un moment" },
+  { id: "konami", emoji: "🕹️", label: "Code Konami", hint: "PC : ↑ ↑ ↓ ↓ ← → ← → B A · Mobile : glisse ↑ ↑ ↓ ↓ ← → ← → puis 2 tapes" },
+  { id: "neige", emoji: "❄️", label: "Blizzard", hint: "Mot magique : ce qui tombe du ciel en hiver" },
+  { id: "fete", emoji: "🎉", label: "C'est la fête", hint: "Mot magique : « fête »" },
+  { id: "cadeau", emoji: "🎁", label: "Pluie de paquets", hint: "Mot magique : le mot le plus important du site" },
+  { id: "chut", emoji: "🤫", label: "Mode murmure", hint: "Mot magique : celui qui ouvre la note de la rédaction" },
+  { id: "disco", emoji: "🪩", label: "Disco inferno", hint: "Mot magique : un style musical à paillettes" },
+  { id: "flip", emoji: "🙃", label: "Tête en bas", hint: "Mot magique : « flip »" },
+  { id: "owner", emoji: "👋", label: "Coucou toi", hint: "Mot magique : le prénom du propriétaire" },
+  { id: "console", emoji: "💻", label: "Dev curieux·se", hint: "Mot magique : « source » (ou cadeau() dans la console)" },
+  { id: "logo", emoji: "🐣", label: "L'œuf dans le paquet", hint: "Le grand logo WISHLIST adore qu'on le touche (7 fois)" },
+  { id: "scatter", emoji: "🔤", label: "Lettres en vadrouille", hint: "Double-clic / double-tape sur le grand titre" },
+  { id: "marquee", emoji: "⏪", label: "Rembobinage", hint: "Touche le bandeau défilant tout en haut" },
+  { id: "price", emoji: "💸", label: "Le prix du cœur", hint: "Touche 5 fois le prix d'un cadeau" },
+  { id: "unwrap", emoji: "💝", label: "Déballage", hint: "Double-clic / double-tape sur une photo" },
+  { id: "promise", emoji: "🤫", label: "Promis, juré", hint: "Le 🤫 de la note de la rédaction a un secret (3 fois)" },
+  { id: "lock", emoji: "🔒", label: "Trop curieux·se", hint: "Reste appuyé (ou survole) le cadenas du pied de page" },
+  { id: "sparkle", emoji: "✨", label: "Poussière de fée", hint: "Glisse le doigt sur le grand titre (PC : maintiens Maj et bouge la souris)" },
+  { id: "shake", emoji: "🔮", label: "Boule à neige", hint: "Reste appuyé 1 seconde sur « Merci. » (ou secoue ton téléphone)" },
+  { id: "tab", emoji: "🥹", label: "Le retour", hint: "Va voir une autre appli ou un autre onglet, puis reviens" },
+  { id: "idle", emoji: "💤", label: "La sieste", hint: "Ne touche plus à rien pendant 45 secondes" },
   { id: "bottom", emoji: "🕵️", label: "Détective", hint: "Descends tout en bas" },
-  { id: "sparkle", emoji: "✨", label: "Poussière de fée", hint: "Maintiens Maj en bougeant la souris" },
-  { id: "shake", emoji: "🔮", label: "Boule à neige", hint: "Secoue ton téléphone" },
-  { id: "console", emoji: "💻", label: "Dev curieux·se", hint: "Ouvre la console du navigateur" },
-  { id: "special", emoji: "🛷", label: "Visiteur rare", hint: "Quelque chose traverse parfois l'écran…" },
+  { id: "special", emoji: "🛷", label: "Visiteur rare", hint: "Quelque chose traverse parfois l'écran… attrape-le" },
   { id: "master", emoji: "👑", label: "Grand·e maître des secrets", hint: "Trouve tous les autres" },
 ] as const;
 
@@ -42,6 +42,8 @@ interface EggsContext {
   has: (id: EggId) => boolean;
   discovered: EggId[];
   stage: (emoji: string, text: string, ms?: number) => void;
+  /** Mot magique (clavier ou champ du carnet). Renvoie true si le mot est reconnu. */
+  say: (word: string) => boolean;
 }
 
 const Ctx = createContext<EggsContext | null>(null);
@@ -59,7 +61,9 @@ function normalize(s: string) {
     .toLowerCase();
 }
 
-const KONAMI = ["arrowup", "arrowup", "arrowdown", "arrowdown", "arrowleft", "arrowright", "arrowleft", "arrowright", "b", "a"];
+const ARROWS = ["arrowup", "arrowup", "arrowdown", "arrowdown", "arrowleft", "arrowright", "arrowleft", "arrowright"];
+const KONAMI = [...ARROWS, "b", "a"];
+const KONAMI_TOUCH = [...ARROWS, "tap", "tap"];
 
 interface Flyer {
   key: number;
@@ -133,70 +137,111 @@ export function EasterEggs({ ownerName, children }: { ownerName: string; childre
     window.setTimeout(() => document.documentElement.classList.remove(cls), ms);
   }, []);
 
-  /* ---------- Clavier : mots magiques + Konami ---------- */
-  useEffect(() => {
-    let buffer = "";
-    let keys: string[] = [];
-    const owner = normalize(ownerName).replace(/[^a-z]/g, "");
-
-    const onKey = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement;
-      if (target.closest("input, textarea, select, [contenteditable]")) return;
-      const k = e.key.toLowerCase();
-
-      keys = [...keys, k].slice(-KONAMI.length);
-      if (keys.join() === KONAMI.join()) {
-        keys = [];
-        found("konami");
-        flash("legend", 12000);
-        rain({ duration: 5000, colors: themeColors(), density: 5 });
-        rain({ duration: 5000, snow: true, density: 3 });
-        stage("🕹️", "Mode légende débloqué !", 3200);
-        return;
-      }
-
-      if (k.length !== 1) return;
-      buffer = (buffer + normalize(k)).slice(-24);
-
-      const said = (word: string) => buffer.endsWith(word);
-      if (said("neige") || said("snow")) {
-        buffer = "";
+  /* ---------- Mots magiques ---------- */
+  const ownerKey = normalize(ownerName).replace(/[^a-z]/g, "");
+  const say = useCallback(
+    (raw: string): boolean => {
+      const w = normalize(raw).replace(/[^a-z]/g, "");
+      const is = (...words: string[]) => words.some((x) => w.endsWith(x));
+      if (is("neige", "snow")) {
         found("neige");
-        rain({ snow: true, duration: 7000, density: 9 });
+        rain({ snow: true, duration: 6000, density: 6 });
         stage("❄️", "Blizzard !");
-      } else if (said("fete") || said("party")) {
-        buffer = "";
+      } else if (is("fete", "party")) {
         found("fete");
         cannons(themeColors());
         stage("🎉", "Que la fête commence !");
-      } else if (said("cadeau")) {
-        buffer = "";
+      } else if (is("cadeau", "cadeaux")) {
         found("cadeau");
-        rain({ emojis: ["🎁", "🎀", "🎁", "💝"], duration: 3500, density: 2 });
-      } else if (said("chut")) {
-        buffer = "";
+        rain({ emojis: ["🎁", "🎀", "🎁", "💝"], duration: 3000, density: 2 });
+      } else if (is("chut")) {
         found("chut");
         flash("whisper", 3500);
         stage("🤫", "Chuuut… personne ne saura rien.", 3500);
-      } else if (said("disco")) {
-        buffer = "";
+      } else if (is("disco")) {
         found("disco");
-        flash("disco", 8000);
-        rain({ emojis: ["🪩", "🕺", "💃", "✨"], duration: 4000, density: 1 });
-      } else if (said("flip")) {
-        buffer = "";
+        flash("disco", 7000);
+        rain({ emojis: ["🪩", "🕺", "💃", "✨"], duration: 3500, density: 1 });
+      } else if (is("flip")) {
         found("flip");
         flash("upside", 3500);
-      } else if (owner.length > 2 && said(owner)) {
-        buffer = "";
+      } else if (is("source", "console")) {
+        found("console");
+        burst({ emojis: ["💻", "🎁", "✨"], count: 40, spread: 360, velocity: 10 });
+        stage("💻", "Le code est poésie. Les réservations, elles, restent secrètes.");
+      } else if (ownerKey.length > 2 && is(ownerKey)) {
         found("owner");
-        stage("👋", `C'est moi ! Mais je ne vois aucune réservation 🙈`, 3200);
+        stage("👋", "C'est moi ! Mais je ne vois aucune réservation 🙈", 3200);
         burst({ emojis: ["💛", "🫶", "😊"], count: 24, spread: 360, velocity: 8, gravity: 0.15 });
+      } else return false;
+      return true;
+    },
+    [found, flash, stage, ownerKey],
+  );
+
+  const konami = useCallback(() => {
+    found("konami");
+    flash("legend", 12000);
+    rain({ duration: 4500, colors: themeColors(), density: 4 });
+    stage("🕹️", "Mode légende débloqué !", 3200);
+  }, [found, flash, stage]);
+
+  /* ---------- Clavier (PC) ---------- */
+  useEffect(() => {
+    let buffer = "";
+    let keys: string[] = [];
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.target as HTMLElement).closest("input, textarea, select, [contenteditable]")) return;
+      const k = e.key.toLowerCase();
+      keys = [...keys, k].slice(-KONAMI.length);
+      if (keys.join() === KONAMI.join()) {
+        keys = [];
+        konami();
+        return;
       }
+      if (k.length !== 1) return;
+      buffer = (buffer + normalize(k)).slice(-24);
+      if (say(buffer)) buffer = "";
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [found, flash, stage, ownerName]);
+  }, [say, konami]);
+
+  /* ---------- Glissements (mobile) : Konami tactile ---------- */
+  useEffect(() => {
+    let seq: string[] = [];
+    let sx = 0;
+    let sy = 0;
+    let st = 0;
+    const onStart = (e: TouchEvent) => {
+      const t = e.touches[0];
+      sx = t.clientX;
+      sy = t.clientY;
+      st = performance.now();
+    };
+    const onEnd = (e: TouchEvent) => {
+      const t = e.changedTouches[0];
+      const dx = t.clientX - sx;
+      const dy = t.clientY - sy;
+      const dt = performance.now() - st;
+      let move: string | null = null;
+      if (Math.max(Math.abs(dx), Math.abs(dy)) > 40 && dt < 700) {
+        move = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "arrowright" : "arrowleft") : dy > 0 ? "arrowdown" : "arrowup";
+      } else if (Math.abs(dx) < 10 && Math.abs(dy) < 10 && dt < 300) move = "tap";
+      if (!move) return;
+      seq = [...seq, move].slice(-KONAMI_TOUCH.length);
+      if (seq.join() === KONAMI_TOUCH.join()) {
+        seq = [];
+        konami();
+      }
+    };
+    window.addEventListener("touchstart", onStart, { passive: true });
+    window.addEventListener("touchend", onEnd, { passive: true });
+    return () => {
+      window.removeEventListener("touchstart", onStart);
+      window.removeEventListener("touchend", onEnd);
+    };
+  }, [konami]);
 
   /* ---------- Onglet quitté / retrouvé ---------- */
   useEffect(() => {
@@ -227,8 +272,7 @@ export function EasterEggs({ ownerName, children }: { ownerName: string; childre
   useEffect(() => {
     const w = window as unknown as { cadeau?: () => string };
     w.cadeau = () => {
-      found("console");
-      burst({ emojis: ["🎁", "💻", "✨"], count: 40, spread: 360, velocity: 10 });
+      say("source");
       return "🎁 Bien joué, petit·e curieux·se ! (Et non, les réservations ne sont pas dans la console 😉)";
     };
     console.log(
@@ -241,7 +285,7 @@ export function EasterEggs({ ownerName, children }: { ownerName: string; childre
     return () => {
       delete w.cadeau;
     };
-  }, [found]);
+  }, [say]);
 
   /* ---------- Sieste (inactivité) ---------- */
   useEffect(() => {
@@ -344,8 +388,8 @@ export function EasterEggs({ ownerName, children }: { ownerName: string; childre
   }, []);
 
   const value = useMemo(
-    () => ({ found, has: (id: EggId) => discovered.includes(id), discovered, stage }),
-    [found, discovered, stage],
+    () => ({ found, has: (id: EggId) => discovered.includes(id), discovered, stage, say }),
+    [found, discovered, stage, say],
   );
 
   return (

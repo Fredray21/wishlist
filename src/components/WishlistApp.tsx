@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { flushSync } from "react-dom";
 import { api, readLocalReservations, removeLocalReservation, type LocalReservation } from "@/lib/client";
+import type { Theme } from "@/lib/themes";
 import { PRIORITIES, type ItemsResponse, type PublicItem } from "@/lib/types";
 import { CancelDialog } from "./CancelDialog";
 import { Filters, PRICE_RANGES, type FiltersState } from "./Filters";
@@ -22,7 +23,7 @@ interface Props {
   initialItems: PublicItem[];
   isAdmin: boolean;
   ownerName: string;
-  birthdayMonth: number | null;
+  theme: Theme;
 }
 
 const DEFAULT_FILTERS: FiltersState = { availability: "available", category: "all", price: "all", sort: "priority" };
@@ -35,7 +36,7 @@ export function WishlistApp(props: Props) {
   );
 }
 
-function WishlistInner({ initialItems, isAdmin, ownerName, birthdayMonth }: Props) {
+function WishlistInner({ initialItems, isAdmin, ownerName, theme }: Props) {
   const router = useRouter();
   const [items, setItems] = useState(initialItems);
   const [mine, setMine] = useState<Record<string, LocalReservation>>({});
@@ -212,13 +213,19 @@ function WishlistInner({ initialItems, isAdmin, ownerName, birthdayMonth }: Prop
     onDelete: () => setDeleting(item),
   });
 
+  const cover = items
+    .filter((i) => !i.received && (isAdmin || !i.reserved))
+    .sort((a, b) => PRIORITIES.indexOf(a.priority) - PRIORITIES.indexOf(b.priority) || b.createdAt.localeCompare(a.createdAt))
+    .slice(0, 3);
+
   return (
-    <div className="mx-auto flex min-h-dvh max-w-6xl flex-col px-4 sm:px-6">
+    <div className="mx-auto flex min-h-dvh max-w-7xl flex-col px-4 sm:px-6 lg:px-10">
       <Masthead
         ownerName={ownerName}
-        birthdayMonth={birthdayMonth}
+        theme={theme}
         isAdmin={isAdmin}
         onLogout={logout}
+        cover={cover}
         stats={
           isAdmin
             ? [
@@ -229,78 +236,97 @@ function WishlistInner({ initialItems, isAdmin, ownerName, birthdayMonth }: Prop
             : [
                 { label: "Pièces", value: openCount },
                 { label: "Disponibles", value: availableCount },
-                { label: "Reçus", value: receivedCount },
+                { label: "Reçues", value: receivedCount },
               ]
         }
       />
 
-      <main className="flex-1 space-y-8 pb-10">
-        <div data-reveal>{isAdmin ? <AdminNotice /> : <SpoilerNotice ownerName={ownerName} />}</div>
-
-        <div className="sticky top-3 z-20 flex flex-col gap-2 rounded-theme border border-line/70 bg-bg/75 p-2 shadow-sm backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
-          <Filters value={filters} onChange={changeFilters} categories={categories} isAdmin={isAdmin} />
-          {isAdmin && (
-            <button
-              type="button"
-              onClick={() => {
-                setEditing(null);
-                setFormOpen(true);
-              }}
-              className="btn-fill flex shrink-0 items-center justify-center gap-2 rounded-theme-sm bg-primary px-4 py-2.5 text-sm font-semibold uppercase tracking-[0.12em] text-primary-ink shadow-sm transition active:scale-95"
-            >
-              <Plus className="size-4" /> Ajouter un cadeau
-            </button>
-          )}
+      <main className="flex-1 pb-10">
+        <div data-reveal className="mt-14">
+          {isAdmin ? <AdminNotice /> : <SpoilerNotice ownerName={ownerName} />}
         </div>
 
-        {active.length > 0 ? (
-          <div className="grid grid-flow-dense grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-7">
-            {active.map((item, index) => {
-              const featured = index === 0 && active.length >= 4 && filters.sort === "priority";
-              return (
+        {/* I — La sélection */}
+        <section aria-labelledby="selection-title" className="mt-16">
+          <div data-reveal className="flex items-end justify-between gap-4">
+            <h2 id="selection-title" className="font-display text-5xl leading-none text-hero sm:text-7xl">
+              <span className="eyebrow mb-4 block text-hero-muted">Chapitre I</span>
+              La sélection
+            </h2>
+            <span className="font-display tabular text-5xl leading-none text-hero-muted sm:text-7xl">
+              {String(active.length).padStart(2, "0")}
+            </span>
+          </div>
+
+          <div className="sticky top-0 z-20 -mx-4 mt-8 border-y border-line bg-surface px-4 py-1.5 text-ink sm:mx-0 sm:px-5 sm:py-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+              <div className="flex-1">
+                <Filters
+                  value={filters}
+                  onChange={changeFilters}
+                  categories={categories}
+                  isAdmin={isAdmin}
+                  counts={{ available: availableCount, all: openCount }}
+                />
+              </div>
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditing(null);
+                    setFormOpen(true);
+                  }}
+                  className="btn-primary shrink-0"
+                >
+                  <Plus className="size-3.5" /> Ajouter
+                </button>
+              )}
+            </div>
+          </div>
+
+          {active.length > 0 ? (
+            <div className="mt-8 grid grid-cols-2 gap-x-3 gap-y-8 sm:gap-x-6 sm:gap-y-10 lg:grid-cols-3 xl:grid-cols-4">
+              {active.map((item, index) => (
                 <div
                   key={item.id}
                   data-reveal
-                  className={featured ? "sm:col-span-2 lg:row-span-2" : ""}
-                  style={{ "--delay": `${(index % 6) * 70}ms`, viewTransitionName: `vt-${item.id}` } as React.CSSProperties}
+                 
+                  style={{ "--delay": `${(index % 4) * 60}ms`, viewTransitionName: `vt-${item.id}` } as React.CSSProperties}
                 >
-                  <ItemCard index={index} featured={featured} {...cardProps(item)} />
+                  <ItemCard index={index} {...cardProps(item)} />
                 </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center gap-3 rounded-theme border border-dashed border-line bg-surface/80 px-6 py-16 text-center text-ink">
-            <SearchX className="float size-10 text-muted" strokeWidth={1.5} />
-            <p className="font-display text-2xl">
-              {openCount === 0 ? "La liste est vide pour le moment." : "Rien ne correspond à ces filtres."}
-            </p>
-            {openCount > 0 && (
-              <button
-                type="button"
-                onClick={() => changeFilters({ ...DEFAULT_FILTERS, availability: "all" })}
-                className="text-sm font-medium text-primary underline-offset-4 hover:underline"
-              >
-                Afficher tous les cadeaux
-              </button>
-            )}
-          </div>
-        )}
+              ))}
+            </div>
+          ) : (
+            <div className="mt-8 flex flex-col items-center gap-4 border border-line bg-surface px-6 py-20 text-center text-ink">
+              <SearchX className="float size-9 text-muted" strokeWidth={1} />
+              <p className="font-display text-3xl">
+                {openCount === 0 ? "La sélection arrive bientôt." : "Rien ne correspond à ces filtres."}
+              </p>
+              {openCount > 0 && (
+                <button type="button" onClick={() => changeFilters({ ...DEFAULT_FILTERS, availability: "all" })} className="btn-outline">
+                  Afficher toute la sélection
+                </button>
+              )}
+            </div>
+          )}
+        </section>
 
+        {/* II — Archives */}
         {received.length > 0 && (
-          <section className="pt-12" aria-labelledby="received-title">
-            <div data-reveal className="mb-6 flex items-end justify-between gap-4 border-b border-hero/15 pb-4">
+          <section className="mt-24" aria-labelledby="received-title">
+            <div data-reveal className="flex items-end justify-between gap-4 border-b border-hero/20 pb-6">
               <h2 id="received-title" className="font-display text-5xl leading-none text-hero sm:text-7xl">
-                <span className="text-[11px] font-sans font-semibold uppercase tracking-[0.35em] text-hero-muted block mb-3">Archives</span>
+                <span className="eyebrow mb-4 block text-hero-muted">Chapitre II · Archives</span>
                 Déjà <em className="outline-text-hero not-italic">reçus</em>
               </h2>
-              <span className="font-display text-5xl leading-none text-hero-muted sm:text-7xl tabular">
+              <span className="font-display tabular text-5xl leading-none text-hero-muted sm:text-7xl">
                 {String(received.length).padStart(2, "0")}
               </span>
             </div>
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-8 sm:gap-x-6 lg:grid-cols-4 xl:grid-cols-5">
               {received.map((item, index) => (
-                <div key={item.id} data-reveal style={{ "--delay": `${(index % 4) * 70}ms` } as React.CSSProperties}>
+                <div key={item.id} data-reveal style={{ "--delay": `${(index % 5) * 60}ms` } as React.CSSProperties}>
                   <ItemCard index={index} {...cardProps(item)} />
                 </div>
               ))}
@@ -357,7 +383,7 @@ function WishlistInner({ initialItems, isAdmin, ownerName, birthdayMonth }: Prop
               <button
                 type="button"
                 onClick={() => setDeleting(null)}
-                className="rounded-xl px-4 py-2.5 text-sm font-medium text-muted hover:bg-surface-2"
+                className="btn-ghost"
               >
                 Annuler
               </button>
@@ -365,7 +391,7 @@ function WishlistInner({ initialItems, isAdmin, ownerName, birthdayMonth }: Prop
                 type="button"
                 onClick={confirmDelete}
                 disabled={busyId === deleting?.id}
-                className="flex items-center gap-2 rounded-xl bg-danger px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:opacity-60"
+                className="btn-primary !border-danger !bg-danger !text-white"
               >
                 {busyId === deleting?.id && <Loader2 className="size-4 animate-spin" />}
                 Supprimer
@@ -381,7 +407,7 @@ function WishlistInner({ initialItems, isAdmin, ownerName, birthdayMonth }: Prop
           toast ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"
         }`}
       >
-        {toast && <p className="rounded-full bg-ink px-4 py-2.5 text-sm font-medium text-surface shadow-xl">{toast}</p>}
+        {toast && <p className="eyebrow bg-ink px-5 py-3 text-surface shadow-xl">{toast}</p>}
       </div>
     </div>
   );
