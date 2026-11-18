@@ -1,6 +1,7 @@
 "use client";
 
-import { EyeOff } from "lucide-react";
+import { ArrowRight, EyeOff } from "lucide-react";
+import Link from "next/link";
 import { useRef, useState } from "react";
 import { useEggs } from "./fx/EasterEggs";
 import { burst } from "./fx/particles";
@@ -71,11 +72,16 @@ export function SpoilerNotice({ ownerName, compact = false }: { ownerName: strin
 
 export function AdminNotice() {
   return (
-    <aside role="note" className="flex items-center gap-3 border-y border-hero/20 py-5 text-sm text-hero">
-      <EyeOff className="size-4 shrink-0 text-accent" />
-      <p>
-        <strong>Mode Admin :</strong> les réservations de vos proches sont masquées pour garder la surprise.
+    <aside role="note" className="flex flex-col gap-4 border-y border-hero/20 py-5 text-sm text-hero sm:flex-row sm:items-center sm:justify-between">
+      <p className="flex items-center gap-3">
+        <EyeOff className="size-4 shrink-0 text-accent" />
+        <span>
+          <strong>Mode Admin :</strong> les réservations de vos proches sont masquées pour garder la surprise.
+        </span>
       </p>
+      <Link href="/admin/reservations" className="btn-outline shrink-0 self-start text-hero sm:self-auto">
+        Libérer une réservation <ArrowRight className="size-3.5" />
+      </Link>
     </aside>
   );
 }

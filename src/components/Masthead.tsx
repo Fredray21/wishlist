@@ -130,8 +130,9 @@ export function Masthead({ ownerName, theme, isAdmin, onLogout, stats, cover }: 
         <div className="flex items-center justify-end gap-4">
           {isAdmin ? (
             <>
-              <Link href="/admin/reservations" className="eyebrow link-underline hidden items-center gap-1.5 hover:text-hero sm:inline-flex">
-                <Unlock className="size-3" /> Réservations
+              <Link href="/admin/reservations" className="eyebrow link-underline inline-flex items-center gap-1.5 hover:text-hero" title="Libérer une réservation">
+                <Unlock className="size-3" /> <span className="sm:hidden">Résa</span>
+                <span className="hidden sm:inline">Réservations</span>
               </Link>
               <button type="button" onClick={onLogout} className="eyebrow link-underline inline-flex items-center gap-1.5 hover:text-hero" title="Se déconnecter">
                 <LogOut className="size-3" /> <span className="hidden sm:inline">Quitter</span>

@@ -83,7 +83,8 @@ function ensureCanvas() {
     zIndex: "70",
   });
   document.body.appendChild(canvas);
-  ctx = canvas.getContext("2d", { alpha: true, desynchronized: true });
+  // Pas de `desynchronized` : sur certains téléphones, le calque devient noir et opaque.
+  ctx = canvas.getContext("2d", { alpha: true });
   const resize = () => {
     if (!canvas) return;
     dpr = Math.min(window.devicePixelRatio || 1, 1.5);
