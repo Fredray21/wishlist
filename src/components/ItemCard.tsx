@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRight, Check, ChevronLeft, ChevronRight, ExternalLink, Gift, Heart, Lightbulb, Lock, Pencil, RotateCcw, Star, Trash2, Undo2 } from "lucide-react";
+import { ArrowUpRight, Check, ChevronLeft, ChevronRight, ExternalLink, Gift, GripVertical, Heart, Lightbulb, Lock, Pencil, RotateCcw, Star, Trash2, Undo2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { formatPrice, type LocalReservation } from "@/lib/client";
 import { PRIORITY_LABELS, type Priority, type PublicItem } from "@/lib/types";
@@ -34,6 +34,28 @@ export interface ItemCardProps {
   onDelete?: () => void;
   /** Admin, tri par priorité : déplacer parmi les cadeaux de même priorité. */
   move?: { first: boolean; last: boolean; group: string; onUp: () => void; onDown: () => void };
+  /** Admin : poignée de glisser-déposer (fournie par dnd-kit). */
+  drag?: {
+    attachHandle: (el: HTMLElement | null) => void;
+    handleProps: React.HTMLAttributes<HTMLElement>;
+    dragging: boolean;
+  };
+}
+
+function DragHandle({ drag, label }: { drag: NonNullable<ItemCardProps["drag"]>; label: string }) {
+  const { attachHandle, handleProps } = drag;
+  return (
+    <button
+      type="button"
+      ref={attachHandle}
+      {...handleProps}
+      className="flex size-8 cursor-grab touch-none items-center justify-center border border-ink bg-ink text-surface active:cursor-grabbing"
+      aria-label={label}
+      title="Glisser pour déplacer"
+    >
+      <GripVertical className="size-4" />
+    </button>
+  );
 }
 
 export function PriorityLabel({ priority }: { priority: Priority }) {
@@ -130,7 +152,12 @@ export function ItemCard(props: ItemCardProps) {
   );
 
   return (
-    <article id={`item-${item.id}`} className="card group flex h-full scroll-mt-28 flex-col border border-line bg-surface text-ink transition-colors duration-300 hover:border-ink/40">
+    <article
+      id={`item-${item.id}`}
+      className={`card group flex h-full scroll-mt-28 flex-col border bg-surface text-ink transition-[border-color,box-shadow] duration-300 ${
+        props.drag?.dragging ? "border-ink shadow-2xl" : "border-line hover:border-ink/40"
+      }`}
+    >
       {/* Photo : format identique pour toutes les cartes */}
       <div className="card-media relative aspect-[4/5] overflow-hidden bg-surface-2" {...unwrap.handlers} onContextMenu={(e) => e.preventDefault()}>
         {item.url ? (
@@ -159,6 +186,7 @@ export function ItemCard(props: ItemCardProps) {
           </span>
           {props.move ? (
             <span className="flex gap-1" onPointerDown={(e) => e.stopPropagation()}>
+              {props.drag && <DragHandle drag={props.drag} label={`Glisser pour déplacer « ${item.title} » parmi les ${props.move.group}`} />}
               <button
                 type="button"
                 disabled={busy || props.move.first}
