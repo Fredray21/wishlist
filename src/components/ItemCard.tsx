@@ -249,7 +249,7 @@ export function ItemCard(props: ItemCardProps) {
             item.title
           )}
         </h3>
-        {item.note && <p className="mt-2 line-clamp-2 hidden text-sm leading-relaxed text-muted sm:block">{item.note}</p>}
+        {item.note && <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-muted">{item.note}</p>}
 
         {/* Prix + lien */}
         <div className="mt-auto flex items-end justify-between gap-2 border-t border-line pt-3 sm:pt-4">
