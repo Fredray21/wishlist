@@ -4,6 +4,7 @@ import { Copy, Gift, KeyRound, Loader2, PartyPopper } from "lucide-react";
 import { useState } from "react";
 import { api, saveLocalReservation } from "@/lib/client";
 import type { PublicItem } from "@/lib/types";
+import { cannons, themeColors } from "./fx/particles";
 import { Modal } from "./Modal";
 import { SpoilerNotice } from "./SpoilerNotice";
 
@@ -49,6 +50,7 @@ export function ReserveDialog({ item, ownerName, onClose, onReserved, onConflict
         createdAt: new Date().toISOString(),
       });
       setCode(res.code);
+      cannons(themeColors());
       onReserved(res.item);
     } catch (error) {
       setErr(error instanceof Error ? error.message : "Erreur inattendue.");
@@ -97,15 +99,15 @@ export function ReserveDialog({ item, ownerName, onClose, onReserved, onConflict
               placeholder="Ex. on l'offre à plusieurs avec Léa"
             />
           </label>
-          {err && <p className="rounded-xl bg-danger/10 px-3 py-2 text-sm text-danger">{err}</p>}
+          {err && <p className="rounded-theme-sm bg-danger/10 px-3 py-2 text-sm text-danger">{err}</p>}
           <div className="flex justify-end gap-2 pt-1">
-            <button type="button" onClick={close} className="rounded-xl px-4 py-2.5 text-sm font-medium text-muted hover:bg-surface-2">
+            <button type="button" onClick={close} className="rounded-theme-sm px-4 py-2.5 text-sm font-medium text-muted hover:bg-surface-2">
               Annuler
             </button>
             <button
               type="submit"
               disabled={pending}
-              className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-ink transition hover:brightness-110 disabled:opacity-60"
+              className="flex items-center gap-2 rounded-theme-sm bg-primary px-4 py-2.5 text-sm font-semibold text-primary-ink transition hover:brightness-110 disabled:opacity-60"
             >
               {pending ? <Loader2 className="size-4 animate-spin" /> : <Gift className="size-4" />}
               Confirmer la réservation
@@ -119,11 +121,17 @@ export function ReserveDialog({ item, ownerName, onClose, onReserved, onConflict
           <p className="text-sm text-muted">
             Merci ! <strong className="text-ink">{item.title}</strong> est réservé pour vous. {ownerName} n&apos;en saura rien 🤫
           </p>
-          <div className="rounded-2xl border border-dashed border-primary/50 bg-primary/5 p-5">
+          <div className="rounded-theme border border-dashed border-primary/50 bg-primary/5 p-5">
             <p className="mb-2 flex items-center justify-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted">
               <KeyRound className="size-3.5" /> Votre code secret d&apos;annulation
             </p>
-            <p className="font-mono text-5xl font-bold tracking-[0.35em] text-primary">{code}</p>
+            <p className="font-mono text-5xl font-bold tracking-[0.35em] text-primary">
+              {Array.from(code).map((d, i) => (
+                <span key={i} className="pop-in inline-block" style={{ animationDelay: `${200 + i * 140}ms` }}>
+                  {d}
+                </span>
+              ))}
+            </p>
             <button
               type="button"
               onClick={async () => {
@@ -146,7 +154,7 @@ export function ReserveDialog({ item, ownerName, onClose, onReserved, onConflict
           <button
             type="button"
             onClick={close}
-            className="w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-ink transition hover:brightness-110"
+            className="w-full rounded-theme-sm bg-primary px-4 py-2.5 text-sm font-semibold text-primary-ink transition hover:brightness-110"
           >
             J&apos;ai noté mon code
           </button>

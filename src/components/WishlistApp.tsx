@@ -1,9 +1,9 @@
 "use client";
 
-import { CheckCircle2, Gift, Loader2, Lock, LogOut, Plus, SearchX, Trash2 } from "lucide-react";
-import Link from "next/link";
+import { Loader2, Plus, SearchX, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { flushSync } from "react-dom";
 import { api, readLocalReservations, removeLocalReservation, type LocalReservation } from "@/lib/client";
 import { PRIORITIES, type ItemsResponse, type PublicItem } from "@/lib/types";
 import { CancelDialog } from "./CancelDialog";
@@ -13,7 +13,10 @@ import { ItemFormDialog } from "./ItemFormDialog";
 import { Modal } from "./Modal";
 import { ReserveDialog } from "./ReserveDialog";
 import { AdminNotice, SpoilerNotice } from "./SpoilerNotice";
-import { ThemeSwitcher } from "./ThemeSwitcher";
+import { Footer } from "./Footer";
+import { EasterEggs } from "./fx/EasterEggs";
+import { useReveal } from "./fx/Reveal";
+import { Masthead } from "./Masthead";
 
 interface Props {
   initialItems: PublicItem[];
@@ -24,7 +27,15 @@ interface Props {
 
 const DEFAULT_FILTERS: FiltersState = { availability: "available", category: "all", price: "all", sort: "priority" };
 
-export function WishlistApp({ initialItems, isAdmin, ownerName, birthdayMonth }: Props) {
+export function WishlistApp(props: Props) {
+  return (
+    <EasterEggs ownerName={props.ownerName}>
+      <WishlistInner {...props} />
+    </EasterEggs>
+  );
+}
+
+function WishlistInner({ initialItems, isAdmin, ownerName, birthdayMonth }: Props) {
   const router = useRouter();
   const [items, setItems] = useState(initialItems);
   const [mine, setMine] = useState<Record<string, LocalReservation>>({});
@@ -115,8 +126,18 @@ export function WishlistApp({ initialItems, isAdmin, ownerName, birthdayMonth }:
     };
   }, [items, filters, isAdmin, mine]);
 
+  const changeFilters = useCallback((next: FiltersState) => {
+    const doc = document as Document & { startViewTransition?: (cb: () => void) => unknown };
+    if (doc.startViewTransition && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      doc.startViewTransition(() => flushSync(() => setFilters(next)));
+    } else setFilters(next);
+  }, []);
+
+  useReveal([active, received]);
+
   const openCount = items.filter((i) => !i.received).length;
   const availableCount = items.filter((i) => !i.received && !i.reserved).length;
+  const receivedCount = items.length - openCount;
 
   async function cancelMine(item: PublicItem) {
     const local = mine[item.id];
@@ -193,62 +214,31 @@ export function WishlistApp({ initialItems, isAdmin, ownerName, birthdayMonth }:
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-6xl flex-col px-4 sm:px-6">
-      {/* Barre supérieure */}
-      <div className="flex items-center justify-between gap-3 py-4">
-        <span className="flex items-center gap-2 text-sm font-semibold text-hero-muted">
-          <Gift className="size-4" /> Wishlist
-        </span>
-        <div className="flex items-center gap-2">
-          <ThemeSwitcher birthdayMonth={birthdayMonth} />
-          {isAdmin && (
-            <button
-              type="button"
-              onClick={logout}
-              className="flex items-center gap-1.5 rounded-full border border-hero/15 bg-hero/5 px-3 py-1.5 text-xs font-medium text-hero-muted transition hover:bg-hero/10 hover:text-hero"
-              title="Se déconnecter"
-            >
-              <LogOut className="size-3.5" /> <span className="hidden sm:inline">Quitter l&apos;admin</span>
-            </button>
-          )}
-        </div>
-      </div>
+      <Masthead
+        ownerName={ownerName}
+        birthdayMonth={birthdayMonth}
+        isAdmin={isAdmin}
+        onLogout={logout}
+        stats={
+          isAdmin
+            ? [
+                { label: "Idées", value: openCount },
+                { label: "Catégories", value: categories.length },
+                { label: "Reçus", value: receivedCount },
+              ]
+            : [
+                { label: "Pièces", value: openCount },
+                { label: "Disponibles", value: availableCount },
+                { label: "Reçus", value: receivedCount },
+              ]
+        }
+      />
 
-      {/* En-tête thématique (bascule en CSS selon data-theme) */}
-      <header className="pb-8 pt-6 text-center sm:pb-10 sm:pt-10">
-        <h1 className="font-display text-4xl leading-tight text-hero sm:text-6xl">
-          <span className="theme-only" data-for="noel">
-            Liste de Noël de {ownerName} <span aria-hidden>🎄</span>
-          </span>
-          <span className="theme-only" data-for="anniversaire">
-            Liste d&apos;anniversaire de {ownerName} <span aria-hidden>🎂</span>
-          </span>
-          <span className="theme-only" data-for="minimaliste">
-            La wishlist de {ownerName}
-          </span>
-        </h1>
-        <p className="mx-auto mt-3 max-w-xl text-base text-hero-muted sm:text-lg">
-          <span className="theme-only" data-for="noel">
-            Quelques idées à glisser sous le sapin… ✨
-          </span>
-          <span className="theme-only" data-for="anniversaire">
-            Une bougie de plus, quelques envies en plus ! 🎈
-          </span>
-          <span className="theme-only" data-for="minimaliste">
-            Quelques idées, si l&apos;envie vous prend.
-          </span>
-        </p>
-        <p className="mt-4 text-sm text-hero-muted">
-          {isAdmin
-            ? `${openCount} idée${openCount > 1 ? "s" : ""} dans la liste`
-            : `${availableCount} cadeau${availableCount > 1 ? "x" : ""} disponible${availableCount > 1 ? "s" : ""} sur ${openCount}`}
-        </p>
-      </header>
+      <main className="flex-1 space-y-8 pb-10">
+        <div data-reveal>{isAdmin ? <AdminNotice /> : <SpoilerNotice ownerName={ownerName} />}</div>
 
-      <main className="flex-1 space-y-6 pb-16">
-        {isAdmin ? <AdminNotice /> : <SpoilerNotice ownerName={ownerName} />}
-
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <Filters value={filters} onChange={setFilters} categories={categories} isAdmin={isAdmin} />
+        <div className="sticky top-3 z-20 flex flex-col gap-2 rounded-theme border border-line/70 bg-bg/75 p-2 shadow-sm backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
+          <Filters value={filters} onChange={changeFilters} categories={categories} isAdmin={isAdmin} />
           {isAdmin && (
             <button
               type="button"
@@ -256,7 +246,7 @@ export function WishlistApp({ initialItems, isAdmin, ownerName, birthdayMonth }:
                 setEditing(null);
                 setFormOpen(true);
               }}
-              className="flex shrink-0 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-ink shadow-sm transition hover:brightness-110"
+              className="btn-fill flex shrink-0 items-center justify-center gap-2 rounded-theme-sm bg-primary px-4 py-2.5 text-sm font-semibold uppercase tracking-[0.12em] text-primary-ink shadow-sm transition active:scale-95"
             >
               <Plus className="size-4" /> Ajouter un cadeau
             </button>
@@ -264,21 +254,31 @@ export function WishlistApp({ initialItems, isAdmin, ownerName, birthdayMonth }:
         </div>
 
         {active.length > 0 ? (
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {active.map((item) => (
-              <ItemCard key={item.id} {...cardProps(item)} />
-            ))}
+          <div className="grid grid-flow-dense grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-7">
+            {active.map((item, index) => {
+              const featured = index === 0 && active.length >= 4 && filters.sort === "priority";
+              return (
+                <div
+                  key={item.id}
+                  data-reveal
+                  className={featured ? "sm:col-span-2 lg:row-span-2" : ""}
+                  style={{ "--delay": `${(index % 6) * 70}ms`, viewTransitionName: `vt-${item.id}` } as React.CSSProperties}
+                >
+                  <ItemCard index={index} featured={featured} {...cardProps(item)} />
+                </div>
+              );
+            })}
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-line bg-surface/80 px-6 py-14 text-center text-ink">
-            <SearchX className="size-10 text-muted" strokeWidth={1.5} />
-            <p className="font-display text-lg">
-              {openCount === 0 ? "La liste est vide pour le moment." : "Aucun cadeau ne correspond à ces filtres."}
+          <div className="flex flex-col items-center gap-3 rounded-theme border border-dashed border-line bg-surface/80 px-6 py-16 text-center text-ink">
+            <SearchX className="float size-10 text-muted" strokeWidth={1.5} />
+            <p className="font-display text-2xl">
+              {openCount === 0 ? "La liste est vide pour le moment." : "Rien ne correspond à ces filtres."}
             </p>
             {openCount > 0 && (
               <button
                 type="button"
-                onClick={() => setFilters({ ...DEFAULT_FILTERS, availability: "all" })}
+                onClick={() => changeFilters({ ...DEFAULT_FILTERS, availability: "all" })}
                 className="text-sm font-medium text-primary underline-offset-4 hover:underline"
               >
                 Afficher tous les cadeaux
@@ -288,32 +288,28 @@ export function WishlistApp({ initialItems, isAdmin, ownerName, birthdayMonth }:
         )}
 
         {received.length > 0 && (
-          <section className="pt-8" aria-labelledby="received-title">
-            <h2 id="received-title" className="font-display mb-4 flex items-center gap-2 text-2xl text-hero">
-              <CheckCircle2 className="size-6 text-success" /> Déjà reçus
-              <span className="text-base font-normal text-hero-muted">({received.length})</span>
-            </h2>
+          <section className="pt-12" aria-labelledby="received-title">
+            <div data-reveal className="mb-6 flex items-end justify-between gap-4 border-b border-hero/15 pb-4">
+              <h2 id="received-title" className="font-display text-5xl leading-none text-hero sm:text-7xl">
+                <span className="text-[11px] font-sans font-semibold uppercase tracking-[0.35em] text-hero-muted block mb-3">Archives</span>
+                Déjà <em className="outline-text-hero not-italic">reçus</em>
+              </h2>
+              <span className="font-display text-5xl leading-none text-hero-muted sm:text-7xl tabular">
+                {String(received.length).padStart(2, "0")}
+              </span>
+            </div>
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {received.map((item) => (
-                <ItemCard key={item.id} {...cardProps(item)} />
+              {received.map((item, index) => (
+                <div key={item.id} data-reveal style={{ "--delay": `${(index % 4) * 70}ms` } as React.CSSProperties}>
+                  <ItemCard index={index} {...cardProps(item)} />
+                </div>
               ))}
             </div>
           </section>
         )}
       </main>
 
-      <footer className="flex items-center justify-between border-t border-hero/10 py-6 text-xs text-hero-muted">
-        <span>Fait avec ❤️ pour les gens que j&apos;aime.</span>
-        {isAdmin ? (
-          <span className="flex items-center gap-1.5">
-            <Lock className="size-3.5" /> Admin
-          </span>
-        ) : (
-          <Link href="/admin" className="rounded-full p-1.5 opacity-40 transition hover:opacity-100" aria-label="Espace admin">
-            <Lock className="size-3.5" />
-          </Link>
-        )}
-      </footer>
+      <Footer isAdmin={isAdmin} ownerName={ownerName} />
 
       {!isAdmin && (
         <>

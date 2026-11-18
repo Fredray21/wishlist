@@ -28,6 +28,11 @@ Le sélecteur en haut à droite propose `Auto` (par défaut), `Noël`, `Annivers
 | `BIRTHDAY_MONTH` et le mois précédent | Anniversaire : couleurs vives et confettis en CSS |
 | Le reste de l'année | Minimaliste : sobre, suit le mode clair ou sombre du système |
 
+### Design & secrets
+Direction artistique « magazine de mode » : couverture avec titre géant animé lettre par lettre, bandeau défilant, cartes lookbook numérotées avec inclinaison 3D, grain papier, transitions de vue au filtrage, confettis maison (canvas, zéro dépendance). Respecte `prefers-reduced-motion`.
+
+Le site cache **23 easter eggs** 🥚 — le carnet secret (pied de page) donne des indices.
+
 ## Développement
 
 ```bash

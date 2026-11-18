@@ -13,6 +13,7 @@
   --color-primary-ink: var(--primary-ink);
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
+  --color-pop: var(--pop);
   --color-success: var(--success);
   --color-danger: var(--danger);
   --color-reserved: var(--reserved);
@@ -20,55 +21,73 @@
   --font-display: var(--display-font), ui-serif, Georgia, serif;
 }
 
-/* ---------- Minimaliste (défaut) ---------- */
+@utility rounded-theme {
+  border-radius: var(--radius);
+}
+@utility rounded-theme-sm {
+  border-radius: var(--radius-sm);
+}
+
+/* ======================================================================
+   Thèmes
+   ====================================================================== */
+
+/* ---------- Minimaliste : éditorial noir & papier, accent rouge signal ---------- */
 :root,
 [data-theme="minimaliste"] {
-  --bg: #f6f5f2;
-  --surface: #ffffff;
-  --surface-2: #efede8;
-  --ink: #1c1b19;
-  --muted: #6b6862;
-  --line: #e2dfd8;
-  --hero-ink: #1c1b19;
-  --hero-muted: #6b6862;
-  --primary: #1c1b19;
-  --primary-ink: #ffffff;
-  --accent: #8a7a5c;
+  --bg: #f3efe7;
+  --surface: #fbf9f4;
+  --surface-2: #ebe5d9;
+  --ink: #121110;
+  --muted: #6f6a60;
+  --line: #d9d2c3;
+  --hero-ink: #121110;
+  --hero-muted: #6f6a60;
+  --primary: #121110;
+  --primary-ink: #f3efe7;
+  --accent: #d4351c;
   --accent-ink: #ffffff;
-  --success: #2f7d4f;
+  --pop: #d4351c;
+  --success: #2f6b45;
   --danger: #b42318;
-  --reserved: #6b6862;
-  --display-font: var(--font-inter);
-  --display-weight: 650;
-  --display-tracking: -0.03em;
+  --reserved: #121110;
+  --display-font: var(--font-bodoni);
+  --display-weight: 500;
+  --display-tracking: -0.025em;
+  --radius: 2px;
+  --radius-sm: 2px;
+  --grain-opacity: 0.07;
+  --grain-blend: multiply;
   --bg-image: none;
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   [data-theme="minimaliste"] {
-    --bg: #141413;
-    --surface: #1d1c1a;
-    --surface-2: #262522;
-    --ink: #f1efe9;
-    --muted: #a19d94;
-    --line: #34322e;
-    --hero-ink: #f1efe9;
-    --hero-muted: #a19d94;
-    --primary: #f1efe9;
-    --primary-ink: #141413;
-    --accent: #c9b78f;
-    --accent-ink: #141413;
+    --bg: #0f0e0d;
+    --surface: #181716;
+    --surface-2: #23211f;
+    --ink: #f1ece2;
+    --muted: #a39d92;
+    --line: #34312d;
+    --hero-ink: #f1ece2;
+    --hero-muted: #a39d92;
+    --primary: #f1ece2;
+    --primary-ink: #0f0e0d;
+    --accent: #ff5a3c;
+    --pop: #ff5a3c;
     --success: #5cc488;
     --danger: #f97066;
-    --reserved: #a19d94;
+    --reserved: #f1ece2;
+    --grain-blend: screen;
+    --grain-opacity: 0.05;
     color-scheme: dark;
   }
 }
 
-/* ---------- Noël ---------- */
+/* ---------- Noël : velours sapin, rouge profond, or ---------- */
 [data-theme="noel"] {
-  --bg: #0d2a1f;
+  --bg: #0b261c;
   --surface: #fffaf0;
   --surface-2: #f4ead6;
   --ink: #2a1a12;
@@ -80,56 +99,74 @@
   --primary-ink: #fffaf0;
   --accent: #d4a72c;
   --accent-ink: #2a1a12;
+  --pop: #d4a72c;
   --success: #1f6f4a;
   --danger: #a4161a;
   --reserved: #8a6d3b;
   --display-font: var(--font-fraunces);
-  --display-weight: 600;
-  --display-tracking: -0.02em;
+  --display-weight: 500;
+  --display-tracking: -0.03em;
+  --radius: 1.25rem;
+  --radius-sm: 0.75rem;
+  --grain-opacity: 0.09;
+  --grain-blend: overlay;
   --bg-image:
-    radial-gradient(1200px 500px at 50% -10%, rgba(212, 167, 44, 0.18), transparent 70%),
-    radial-gradient(900px 600px at 100% 100%, rgba(164, 22, 26, 0.22), transparent 70%);
+    radial-gradient(1200px 520px at 50% -10%, rgba(212, 167, 44, 0.2), transparent 70%),
+    radial-gradient(900px 600px at 100% 100%, rgba(164, 22, 26, 0.25), transparent 70%),
+    radial-gradient(700px 500px at 0% 60%, rgba(31, 111, 74, 0.25), transparent 70%);
   color-scheme: dark;
 }
 
-/* ---------- Anniversaire ---------- */
+/* ---------- Anniversaire : pop, graphique, couleurs franches ---------- */
 [data-theme="anniversaire"] {
-  --bg: #fff5ec;
+  --bg: #fff1e6;
   --surface: #ffffff;
   --surface-2: #fff0f5;
-  --ink: #2b1838;
-  --muted: #7a6585;
-  --line: #f3d9e6;
-  --hero-ink: #2b1838;
-  --hero-muted: #7a6585;
-  --primary: #d6336c;
+  --ink: #1d1030;
+  --muted: #6f5a7e;
+  --line: #f1d3e2;
+  --hero-ink: #1d1030;
+  --hero-muted: #6f5a7e;
+  --primary: #ff2e63;
   --primary-ink: #ffffff;
-  --accent: #7048e8;
+  --accent: #6c3cff;
   --accent-ink: #ffffff;
-  --success: #2b8a3e;
-  --danger: #c92a2a;
-  --reserved: #7048e8;
-  --display-font: var(--font-fredoka);
-  --display-weight: 600;
-  --display-tracking: -0.01em;
+  --pop: #ffc400;
+  --success: #12a150;
+  --danger: #d6233a;
+  --reserved: #6c3cff;
+  --display-font: var(--font-bricolage);
+  --display-weight: 800;
+  --display-tracking: -0.045em;
+  --radius: 1.75rem;
+  --radius-sm: 1rem;
+  --grain-opacity: 0.05;
+  --grain-blend: multiply;
   --bg-image:
-    radial-gradient(800px 400px at 0% 0%, rgba(250, 176, 5, 0.18), transparent 70%),
-    radial-gradient(800px 500px at 100% 10%, rgba(214, 51, 108, 0.14), transparent 70%),
-    radial-gradient(900px 500px at 50% 100%, rgba(112, 72, 232, 0.12), transparent 70%);
+    radial-gradient(800px 420px at 0% 0%, rgba(255, 196, 0, 0.25), transparent 70%),
+    radial-gradient(800px 500px at 100% 10%, rgba(255, 46, 99, 0.18), transparent 70%),
+    radial-gradient(900px 500px at 50% 100%, rgba(108, 60, 255, 0.15), transparent 70%);
   color-scheme: light;
 }
 
+/* ======================================================================
+   Base
+   ====================================================================== */
+
 html {
   background: var(--bg);
+  scroll-behavior: smooth;
 }
 
 body {
   background-color: var(--bg);
   color: var(--hero-ink);
   min-height: 100dvh;
-  transition: background-color 0.4s ease;
+  transition: background-color 0.5s ease, color 0.5s ease;
+  overflow-x: hidden;
 }
 
+/* Lumières d'ambiance */
 body::before {
   content: "";
   position: fixed;
@@ -139,13 +176,54 @@ body::before {
   background-image: var(--bg-image);
 }
 
+/* Grain papier (SVG inline) */
+body::after {
+  content: "";
+  position: fixed;
+  inset: -50%;
+  z-index: 60;
+  pointer-events: none;
+  opacity: var(--grain-opacity);
+  mix-blend-mode: var(--grain-blend);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  animation: grain 1.2s steps(6) infinite;
+}
+
+@keyframes grain {
+  0% { transform: translate(0, 0); }
+  20% { transform: translate(-3%, 2%); }
+  40% { transform: translate(2%, -3%); }
+  60% { transform: translate(-2%, -1%); }
+  80% { transform: translate(3%, 3%); }
+  100% { transform: translate(0, 0); }
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
 .font-display {
   font-family: var(--display-font), ui-serif, Georgia, serif;
   font-weight: var(--display-weight);
   letter-spacing: var(--display-tracking);
 }
 
-/* Titres propres à chaque thème : bascule en CSS, sans flash ni JS. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Texte détouré (gros chiffres, footer) */
+.outline-text {
+  color: transparent;
+  -webkit-text-stroke: 1.5px currentColor;
+}
+.outline-text-hero {
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--hero-ink);
+}
+
+/* ---------- Contenu propre à chaque thème (bascule CSS, sans flash) ---------- */
 .theme-only {
   display: none;
 }
@@ -158,7 +236,204 @@ html:not([data-theme]) .theme-only[data-for="minimaliste"] {
   display: revert;
 }
 
-/* ---------- Décor : flocons (Noël) & confettis (Anniversaire), CSS pur ---------- */
+/* ======================================================================
+   Animations d'entrée
+   ====================================================================== */
+
+.split-char {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(0.6em) rotate(6deg);
+  animation: rise 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  animation-delay: calc(var(--i) * 35ms + 120ms);
+  transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.split-word {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+@keyframes rise {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Lettres qui s'envolent (easter egg double-clic sur le titre) */
+.scatter .split-char {
+  animation: none;
+  opacity: 1;
+  transform: translate(var(--sx), var(--sy)) rotate(var(--sr));
+}
+
+.fade-up {
+  opacity: 0;
+  transform: translateY(18px);
+  animation: rise 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  animation-delay: var(--delay, 0ms);
+}
+
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition-delay: var(--delay, 0ms);
+}
+[data-reveal].is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---------- Bandeau défilant ---------- */
+.marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 38s linear infinite;
+}
+.marquee-wrap:hover .marquee {
+  animation-play-state: paused;
+}
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* ---------- Cartes : inclinaison 3D + reflet ---------- */
+.tilt {
+  transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(var(--ty, 0));
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.35s;
+  will-change: transform;
+}
+.tilt:hover {
+  --ty: -4px;
+}
+.tilt .glare {
+  background: radial-gradient(
+    circle at var(--gx, 50%) var(--gy, 50%),
+    rgba(255, 255, 255, 0.35),
+    transparent 45%
+  );
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.tilt:hover .glare {
+  opacity: 1;
+}
+
+.wiggle {
+  animation: wiggle 0.7s ease-in-out;
+}
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0); }
+  20% { transform: rotate(-6deg) scale(1.04); }
+  40% { transform: rotate(5deg) scale(1.06); }
+  60% { transform: rotate(-3deg) scale(1.03); }
+  80% { transform: rotate(2deg); }
+}
+
+.jelly {
+  animation: jelly 0.6s ease;
+}
+@keyframes jelly {
+  0%, 100% { transform: scale(1, 1); }
+  30% { transform: scale(1.25, 0.75); }
+  50% { transform: scale(0.85, 1.15); }
+  70% { transform: scale(1.08, 0.94); }
+}
+
+.float {
+  animation: float 3.2s ease-in-out infinite;
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50% { transform: translateY(-10px) rotate(3deg); }
+}
+
+.spin-once {
+  animation: spin-once 0.9s cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+@keyframes spin-once {
+  to { transform: rotate(360deg) scale(1); }
+}
+
+.shake {
+  animation: shake 0.5s;
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-4px) rotate(-8deg); }
+  40%, 80% { transform: translateX(4px) rotate(8deg); }
+}
+
+.pop-in {
+  animation: pop-in 0.5s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+}
+@keyframes pop-in {
+  from { opacity: 0; transform: scale(0.4) translateY(10px); }
+}
+
+/* Emoji qui traverse l'écran (dates spéciales) */
+.fly-across {
+  position: fixed;
+  z-index: 55;
+  left: 0;
+  font-size: 2.5rem;
+  cursor: pointer;
+  animation: fly-across var(--dur, 14s) linear forwards;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.25));
+}
+@keyframes fly-across {
+  from { transform: translateX(-10vw) translateY(0) scaleX(var(--flip, 1)); }
+  25% { transform: translateX(22vw) translateY(-30px) scaleX(var(--flip, 1)); }
+  50% { transform: translateX(50vw) translateY(10px) scaleX(var(--flip, 1)); }
+  75% { transform: translateX(78vw) translateY(-25px) scaleX(var(--flip, 1)); }
+  to { transform: translateX(110vw) translateY(0) scaleX(var(--flip, 1)); }
+}
+
+/* ---------- Modes secrets ---------- */
+html.disco body > .relative {
+  animation: disco 1.2s linear infinite;
+}
+@keyframes disco {
+  to { filter: hue-rotate(360deg) saturate(1.4); }
+}
+
+html.legend .legend-target .split-char {
+  background: linear-gradient(90deg, #ff2e63, #ffc400, #12a150, #2f80ff, #6c3cff, #ff2e63);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: legend 3s linear infinite;
+  opacity: 1;
+  transform: none;
+}
+@keyframes legend {
+  to { background-position: 300% 0; }
+}
+
+html.whisper main,
+html.whisper header {
+  filter: blur(3px);
+  opacity: 0.35;
+  transition: filter 0.6s, opacity 0.6s;
+}
+
+html.upside body > .relative {
+  transform: rotate(180deg);
+  transition: transform 1.2s cubic-bezier(0.6, -0.3, 0.3, 1.3);
+}
+body > .relative {
+  transition: transform 1.2s cubic-bezier(0.6, -0.3, 0.3, 1.3);
+}
+
+/* ======================================================================
+   Décor : flocons (Noël) & confettis (Anniversaire), CSS pur
+   ====================================================================== */
 .decor {
   position: fixed;
   inset: 0;
@@ -166,7 +441,6 @@ html:not([data-theme]) .theme-only[data-for="minimaliste"] {
   z-index: 0;
   display: none;
 }
-
 [data-theme="noel"] .decor-snow,
 [data-theme="anniversaire"] .decor-confetti {
   display: block;
@@ -182,7 +456,7 @@ html:not([data-theme]) .theme-only[data-for="minimaliste"] {
   background-repeat: repeat;
 }
 
-/* Toutes les tuiles ont une hauteur qui divise 720px : la boucle est sans à-coup. */
+/* Toutes les tuiles ont une hauteur qui divise 720px : boucle sans à-coup. */
 .decor-snow::before {
   background-image:
     radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.9) 1.5px, transparent 2.5px),
@@ -192,7 +466,6 @@ html:not([data-theme]) .theme-only[data-for="minimaliste"] {
   animation: snow-a 30s linear infinite;
   opacity: 0.55;
 }
-
 .decor-snow::after {
   background-image:
     radial-gradient(circle at 10% 50%, rgba(255, 255, 255, 0.9) 2.5px, transparent 3.5px),
@@ -201,17 +474,15 @@ html:not([data-theme]) .theme-only[data-for="minimaliste"] {
   animation: snow-b 48s linear infinite, sway 9s ease-in-out infinite alternate;
   opacity: 0.4;
 }
-
 .decor-confetti::before {
   background-image:
-    radial-gradient(ellipse 3px 7px at 25% 35%, #fab005 98%, transparent),
-    radial-gradient(circle at 40% 60%, #d6336c 2.5px, transparent 3px),
-    radial-gradient(ellipse 7px 3px at 75% 20%, #7048e8 98%, transparent);
+    radial-gradient(ellipse 3px 7px at 25% 35%, #ffc400 98%, transparent),
+    radial-gradient(circle at 40% 60%, #ff2e63 2.5px, transparent 3px),
+    radial-gradient(ellipse 7px 3px at 75% 20%, #6c3cff 98%, transparent);
   background-size: 230px 240px, 210px 180px, 270px 360px;
   animation: snow-a 44s linear infinite;
   opacity: 0.45;
 }
-
 .decor-confetti::after {
   background-image:
     radial-gradient(circle at 30% 30%, #20c997 2px, transparent 2.5px),
@@ -222,36 +493,19 @@ html:not([data-theme]) .theme-only[data-for="minimaliste"] {
 }
 
 @keyframes snow-a {
-  to {
-    background-position: 0 720px, 0 720px, 0 720px;
-  }
+  to { background-position: 0 720px, 0 720px, 0 720px; }
 }
-
 @keyframes snow-b {
-  to {
-    background-position: 0 720px, 0 720px;
-  }
+  to { background-position: 0 720px, 0 720px; }
 }
-
 @keyframes sway {
-  from {
-    transform: translateX(-12px);
-  }
-  to {
-    transform: translateX(12px);
-  }
+  from { transform: translateX(-12px); }
+  to { transform: translateX(12px); }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .decor-snow::before,
-  .decor-snow::after,
-  .decor-confetti::before,
-  .decor-confetti::after {
-    animation: none;
-  }
-}
-
-/* ---------- Dialogues natifs ---------- */
+/* ======================================================================
+   Dialogues & champs
+   ====================================================================== */
 dialog.modal {
   margin: auto;
   padding: 0;
@@ -261,28 +515,29 @@ dialog.modal {
   width: 100%;
   max-height: calc(100dvh - 2rem);
   color: var(--ink);
+  overflow: visible;
 }
 dialog.modal::backdrop {
   background: rgba(10, 10, 10, 0.55);
-  backdrop-filter: blur(3px);
+  backdrop-filter: blur(6px);
 }
 dialog.modal[open] {
-  animation: pop 0.18s ease-out;
+  animation: pop 0.35s cubic-bezier(0.2, 1.2, 0.4, 1);
 }
 @keyframes pop {
   from {
     opacity: 0;
-    transform: translateY(8px) scale(0.98);
+    transform: translateY(24px) scale(0.94) rotate(-1deg);
   }
 }
 
 .field {
   width: 100%;
-  border-radius: 0.75rem;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--line);
   background: var(--surface);
   color: var(--ink);
-  padding: 0.6rem 0.8rem;
+  padding: 0.65rem 0.85rem;
   font-size: 0.95rem;
   outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;
@@ -295,7 +550,51 @@ dialog.modal[open] {
   color: color-mix(in srgb, var(--muted) 70%, transparent);
 }
 
+/* Bouton avec remplissage au survol */
+.btn-fill {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.btn-fill::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--accent);
+  transform: translateY(101%);
+  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.btn-fill:not(:disabled):hover::before {
+  transform: none;
+}
+.btn-fill:not(:disabled):hover {
+  color: var(--accent-ink);
+}
+
+/* Transitions de vue lors du filtrage */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.35s;
+}
+
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .split-char,
+  .fade-up,
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }

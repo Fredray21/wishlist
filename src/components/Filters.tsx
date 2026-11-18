@@ -47,7 +47,7 @@ function Select({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-10 appearance-none rounded-xl border border-line bg-surface py-0 pl-9 pr-8 text-sm font-medium text-ink shadow-sm outline-none transition hover:border-muted focus:border-primary"
+        className="h-10 appearance-none rounded-theme-sm border border-line bg-surface py-0 pl-9 pr-8 text-sm font-medium text-ink shadow-sm outline-none transition hover:border-muted focus:border-primary"
       >
         {children}
       </select>
@@ -64,7 +64,7 @@ export function Filters({ value, onChange, categories, isAdmin }: Props) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       {!isAdmin && (
-        <div role="radiogroup" aria-label="Disponibilité" className="flex h-10 rounded-xl border border-line bg-surface p-1 shadow-sm">
+        <div role="radiogroup" aria-label="Disponibilité" className="flex h-10 rounded-theme-sm border border-line bg-surface p-1 shadow-sm">
           {(
             [
               ["available", "Disponibles"],
@@ -77,7 +77,7 @@ export function Filters({ value, onChange, categories, isAdmin }: Props) {
               role="radio"
               aria-checked={value.availability === id}
               onClick={() => set("availability", id)}
-              className={`rounded-lg px-3 text-sm font-medium transition ${
+              className={`rounded-theme-sm px-3 text-sm font-medium transition ${
                 value.availability === id ? "bg-primary text-primary-ink shadow-sm" : "text-muted hover:text-ink"
               }`}
             >

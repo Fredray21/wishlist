@@ -88,7 +88,7 @@ export function ThemeSwitcher({ birthdayMonth }: { birthdayMonth: number | null 
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-30 mt-2 w-52 overflow-hidden rounded-2xl border border-line bg-surface p-1.5 text-ink shadow-xl"
+          className="absolute right-0 z-30 mt-2 w-52 overflow-hidden rounded-theme border border-line bg-surface p-1.5 text-ink shadow-xl"
         >
           {THEME_CHOICES.map((t) => {
             const Icon = ICONS[t];
@@ -99,7 +99,7 @@ export function ThemeSwitcher({ birthdayMonth }: { birthdayMonth: number | null 
                 aria-checked={choice === t}
                 type="button"
                 onClick={() => select(t)}
-                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm transition hover:bg-surface-2"
+                className="flex w-full items-center gap-2.5 rounded-theme-sm px-3 py-2 text-left text-sm transition hover:bg-surface-2"
               >
                 <Icon className="size-4 text-muted" />
                 <span className="flex-1">

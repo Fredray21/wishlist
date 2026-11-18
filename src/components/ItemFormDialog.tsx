@@ -126,7 +126,7 @@ export function ItemFormDialog({ open, item, categories, onClose, onSaved }: Pro
               type="button"
               onClick={fetchOg}
               disabled={!form.url || fetching}
-              className="flex shrink-0 items-center gap-1.5 rounded-xl border border-line px-3 text-sm font-medium transition hover:bg-surface-2 disabled:opacity-50"
+              className="flex shrink-0 items-center gap-1.5 rounded-theme-sm border border-line px-3 text-sm font-medium transition hover:bg-surface-2 disabled:opacity-50"
               title="Remplir automatiquement le titre, l'image et le prix"
             >
               {fetching ? <Loader2 className="size-4 animate-spin" /> : <Wand2 className="size-4" />}
@@ -141,7 +141,7 @@ export function ItemFormDialog({ open, item, categories, onClose, onSaved }: Pro
         </label>
 
         <div className="flex gap-3">
-          <div className="flex size-[4.6rem] shrink-0 items-center justify-center overflow-hidden rounded-xl border border-line bg-surface-2">
+          <div className="flex size-[4.6rem] shrink-0 items-center justify-center overflow-hidden rounded-theme-sm border border-line bg-surface-2">
             {form.imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element -- aperçu d'une URL externe
               <img src={form.imageUrl} alt="" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
@@ -196,7 +196,7 @@ export function ItemFormDialog({ open, item, categories, onClose, onSaved }: Pro
             {PRIORITIES.map((p) => (
               <label
                 key={p}
-                className={`cursor-pointer rounded-xl border px-2 py-2 text-center text-sm font-medium transition ${
+                className={`cursor-pointer rounded-theme-sm border px-2 py-2 text-center text-sm font-medium transition ${
                   form.priority === p ? "border-primary bg-primary text-primary-ink" : "border-line hover:bg-surface-2"
                 }`}
               >
@@ -225,17 +225,17 @@ export function ItemFormDialog({ open, item, categories, onClose, onSaved }: Pro
           />
         </label>
 
-        {info && <p className="rounded-xl bg-success/10 px-3 py-2 text-sm text-success">{info}</p>}
-        {err && <p className="rounded-xl bg-danger/10 px-3 py-2 text-sm text-danger">{err}</p>}
+        {info && <p className="rounded-theme-sm bg-success/10 px-3 py-2 text-sm text-success">{info}</p>}
+        {err && <p className="rounded-theme-sm bg-danger/10 px-3 py-2 text-sm text-danger">{err}</p>}
 
         <div className="flex justify-end gap-2 pt-1">
-          <button type="button" onClick={onClose} className="rounded-xl px-4 py-2.5 text-sm font-medium text-muted hover:bg-surface-2">
+          <button type="button" onClick={onClose} className="rounded-theme-sm px-4 py-2.5 text-sm font-medium text-muted hover:bg-surface-2">
             Annuler
           </button>
           <button
             type="submit"
             disabled={pending}
-            className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-ink transition hover:brightness-110 disabled:opacity-60"
+            className="flex items-center gap-2 rounded-theme-sm bg-primary px-4 py-2.5 text-sm font-semibold text-primary-ink transition hover:brightness-110 disabled:opacity-60"
           >
             {pending && <Loader2 className="size-4 animate-spin" />}
             {item ? "Enregistrer" : "Ajouter à la liste"}
