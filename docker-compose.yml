@@ -1,0 +1,19 @@
+# Production : ~/app/wishlist sur le VPS. Le .env à côté est généré par la CI
+# à partir des secrets GitHub (voir .github/workflows/build-and-deploy.yml).
+# En local : `cp .env.example .env` puis `docker compose up --build`.
+name: wishlist
+
+services:
+  web:
+    image: ghcr.io/${IMAGE_OWNER:-fredray21}/wishlist:${TAG:-latest}
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATA_DIR: /app/data
+    ports:
+      # Le reverse proxy Nginx du VPS envoie le domaine vers ce port (lié à 127.0.0.1 uniquement).
+      - "${HTTP_BIND:-127.0.0.1:5020}:3000"
+    volumes:
+      # Volume persistant : les redéploiements n'écrasent jamais la wishlist.
+      - ./data:/app/data

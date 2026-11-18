@@ -1,0 +1,22 @@
+# Dépendances / build
+node_modules/
+.next/
+out/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+# Données réelles de la wishlist (jamais commitées)
+data/*
+!data/wishlist.example.json
+!data/.gitkeep
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Divers
+.DS_Store
+*.log
+coverage/

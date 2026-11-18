@@ -1,0 +1,11 @@
+node_modules
+.next
+.git
+.github
+data/*
+!data/wishlist.example.json
+.env
+.env.*
+*.log
+coverage
+README.md

@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "items": [
+    {
+      "id": "exemple-casque",
+      "title": "Casque audio sans fil à réduction de bruit",
+      "url": "https://example.com/casque",
+      "imageUrl": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80",
+      "price": 199,
+      "category": "High-tech",
+      "priority": "coup-de-coeur",
+      "note": "Coloris noir de préférence.",
+      "received": false,
+      "receivedAt": null,
+      "createdAt": "2026-01-01T10:00:00.000Z",
+      "updatedAt": "2026-01-01T10:00:00.000Z",
+      "reservation": null
+    },
+    {
+      "id": "exemple-livre",
+      "title": "Un bon roman de science-fiction",
+      "imageUrl": "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=800&q=80",
+      "price": 22.9,
+      "category": "Livres",
+      "priority": "envie",
+      "note": "Surprenez-moi !",
+      "received": false,
+      "receivedAt": null,
+      "createdAt": "2026-01-02T10:00:00.000Z",
+      "updatedAt": "2026-01-02T10:00:00.000Z",
+      "reservation": null
+    },
+    {
+      "id": "exemple-plante",
+      "title": "Plante d'intérieur facile à vivre",
+      "imageUrl": "https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=800&q=80",
+      "price": 35,
+      "category": "Maison",
+      "priority": "idee",
+      "received": false,
+      "receivedAt": null,
+      "createdAt": "2026-01-03T10:00:00.000Z",
+      "updatedAt": "2026-01-03T10:00:00.000Z",
+      "reservation": null
+    },
+    {
+      "id": "exemple-mug",
+      "title": "Mug isotherme",
+      "price": 18,
+      "category": "Maison",
+      "priority": "idee",
+      "received": true,
+      "receivedAt": "2026-01-10T10:00:00.000Z",
+      "createdAt": "2026-01-04T10:00:00.000Z",
+      "updatedAt": "2026-01-10T10:00:00.000Z",
+      "reservation": null
+    }
+  ]
+}

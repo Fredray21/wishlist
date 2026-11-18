@@ -1,0 +1,116 @@
+name: CI / Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  # Port local du VPS vers lequel Nginx redirige le domaine (non secret).
+  HTTP_BIND: "127.0.0.1:5020"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Lint, types, tests, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  image:
+    name: Image Docker
+    needs: check
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+      - id: owner
+        run: echo "name=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ steps.owner.outputs.name }}/wishlist:${{ github.sha }}
+            ghcr.io/${{ steps.owner.outputs.name }}/wishlist:latest
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,scope=web,mode=max
+
+  deploy:
+    name: Déploiement VPS
+    needs: image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Création du .env à partir des secrets GitHub
+        env:
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+          OWNER_NAME: ${{ vars.OWNER_NAME || 'Frédéric' }}
+          BIRTHDAY_MONTH: ${{ vars.BIRTHDAY_MONTH }}
+        run: |
+          set -e
+          test -n "$ADMIN_PASSWORD" || { echo "::error::Secret ADMIN_PASSWORD manquant"; exit 1; }
+          test ${#SESSION_SECRET} -ge 32 || { echo "::error::Secret SESSION_SECRET manquant ou < 32 caractères"; exit 1; }
+          mkdir -p deploy
+          cp docker-compose.yml deploy/docker-compose.yml
+          # printf + guillemets simples : aucun caractère des secrets n'est interprété par le shell.
+          {
+            printf "TAG=%s\n" "${{ github.sha }}"
+            printf "IMAGE_OWNER=%s\n" "${GITHUB_REPOSITORY_OWNER,,}"
+            printf "HTTP_BIND=%s\n" "$HTTP_BIND"
+            printf "ADMIN_PASSWORD='%s'\n" "$ADMIN_PASSWORD"
+            printf "SESSION_SECRET='%s'\n" "$SESSION_SECRET"
+            printf "OWNER_NAME='%s'\n" "$OWNER_NAME"
+            printf "BIRTHDAY_MONTH=%s\n" "$BIRTHDAY_MONTH"
+          } > deploy/.env
+
+      - name: Copie sur le VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          source: "deploy/docker-compose.yml,deploy/.env"
+          target: /home/${{ secrets.VPS_USERNAME }}/app/wishlist
+          strip_components: 1
+
+      - name: Pull + démarrage
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            set -e
+            cd /home/${{ secrets.VPS_USERNAME }}/app/wishlist
+            chmod 600 .env
+            # Données persistantes : jamais supprimées ni écrasées par le déploiement.
+            mkdir -p data
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            docker compose pull
+            docker compose up -d --remove-orphans
+            docker image prune -f
