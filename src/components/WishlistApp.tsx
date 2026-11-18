@@ -3,13 +3,24 @@
 import { Loader2, Plus, SearchX, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  closestCenter,
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import { arrayMove, rectSortingStrategy, SortableContext, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { flushSync } from "react-dom";
 import { api, readLocalReservations, removeLocalReservation, type LocalReservation } from "@/lib/client";
 import type { Theme } from "@/lib/themes";
 import { PRIORITIES, PRIORITY_LABELS, type ItemsResponse, type PublicItem } from "@/lib/types";
 import { CancelDialog } from "./CancelDialog";
 import { Filters, PRICE_RANGES, type FiltersState } from "./Filters";
-import { ItemCard } from "./ItemCard";
+import { ItemCard, type ItemCardProps } from "./ItemCard";
+import { SortableCard } from "./SortableCard";
 import { ItemFormDialog } from "./ItemFormDialog";
 import { Modal } from "./Modal";
 import { ReserveDialog } from "./ReserveDialog";
@@ -42,6 +53,11 @@ function WishlistInner({ initialItems, isAdmin, ownerName, theme }: Props) {
   const [mine, setMine] = useState<Record<string, LocalReservation>>({});
   const [filters, setFilters] = useState<FiltersState>(DEFAULT_FILTERS);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
   const [toast, setToast] = useState<string | null>(null);
 
   const [reserving, setReserving] = useState<PublicItem | null>(null);
@@ -226,6 +242,33 @@ function WishlistInner({ initialItems, isAdmin, ownerName, theme }: Props) {
     return { first: index <= 0, last: index === siblings.length - 1 };
   };
 
+  const canReorder = isAdmin && filters.sort === "priority";
+
+  // Groupes contigus par priorité (la grille est triée par priorité).
+  const groups = PRIORITIES.map((priority) => {
+    const list = active.map((item, index) => ({ item, index })).filter(({ item }) => item.priority === priority);
+    return { priority, items: list, ids: list.map(({ item }) => item.id) };
+  }).filter((g) => g.items.length > 0);
+
+  async function onDragEnd({ active: dragged, over }: DragEndEvent) {
+    setDragging(false);
+    if (!over || dragged.id === over.id) return;
+    const group = groups.find((g) => g.ids.includes(String(dragged.id)));
+    if (!group || !group.ids.includes(String(over.id))) return; // seulement dans la même priorité
+    const ids = arrayMove(group.ids, group.ids.indexOf(String(dragged.id)), group.ids.indexOf(String(over.id)));
+
+    // Mise à jour immédiate : les cadeaux du groupe se redistribuent leurs places.
+    const slots = ids.map((id) => items.find((i) => i.id === id)!.order).sort((a, b) => a - b);
+    setItems((list) => list.map((i) => (ids.includes(i.id) ? { ...i, order: slots[ids.indexOf(i.id)] } : i)));
+    try {
+      const res = await api<{ items: PublicItem[] }>("/api/items/reorder", { method: "POST", body: { ids } });
+      setItems(res.items);
+    } catch (error) {
+      notify(error instanceof Error ? error.message : "Erreur inattendue.");
+      refresh();
+    }
+  }
+
   async function move(item: PublicItem, direction: "up" | "down") {
     setBusyId(item.id);
     try {
@@ -310,32 +353,49 @@ function WishlistInner({ initialItems, isAdmin, ownerName, theme }: Props) {
           {isAdmin && active.length > 1 && (
             <p className="eyebrow mt-4 text-hero-muted">
               {filters.sort === "priority"
-                ? "Astuce : les flèches ‹ › sur chaque photo rangent le cadeau parmi ceux de même priorité."
+                ? "Astuce : glissez la poignée ⠿ (ou utilisez les flèches ‹ ›) pour ranger un cadeau parmi ceux de même priorité."
                 : "Pour ranger les cadeaux à la main, choisissez le tri « Par priorité »."}
             </p>
           )}
 
           {active.length > 0 ? (
-            <div className="mt-8 grid grid-cols-2 gap-x-3 gap-y-8 sm:gap-x-6 sm:gap-y-10 lg:grid-cols-3 xl:grid-cols-4">
-              {active.map((item, index) => (
-                <div
-                  key={item.id}
-                  data-reveal
-                 
-                  style={{ "--delay": `${(index % 4) * 60}ms`, viewTransitionName: `vt-${item.id}` } as React.CSSProperties}
-                >
-                  <ItemCard
-                    index={index}
-                    {...cardProps(item)}
-                    move={
-                      isAdmin && filters.sort === "priority"
-                        ? { ...neighbours(item), group: PRIORITY_LABELS[item.priority], onUp: () => move(item, "up"), onDown: () => move(item, "down") }
-                        : undefined
-                    }
-                  />
-                </div>
-              ))}
-            </div>
+            <DndContext id="wishlist-dnd" sensors={sensors} collisionDetection={closestCenter} onDragStart={() => setDragging(true)} onDragCancel={() => setDragging(false)} onDragEnd={onDragEnd}>
+              <div className="mt-8 grid grid-cols-2 gap-x-3 gap-y-8 sm:gap-x-6 sm:gap-y-10 lg:grid-cols-3 xl:grid-cols-4">
+                {groups.map((group) => (
+                  <SortableContext key={group.priority} items={group.ids} strategy={rectSortingStrategy}>
+                    {group.items.map(({ item, index }) => {
+                      const card = (drag?: ItemCardProps["drag"]) => (
+                        <ItemCard
+                          index={index}
+                          {...cardProps(item)}
+                          drag={drag}
+                          move={
+                            canReorder
+                              ? { ...neighbours(item), group: PRIORITY_LABELS[item.priority], onUp: () => move(item, "up"), onDown: () => move(item, "down") }
+                              : undefined
+                          }
+                        />
+                      );
+                      return (
+                        <div
+                          key={item.id}
+                          data-reveal
+                          style={{ "--delay": `${(index % 4) * 60}ms`, viewTransitionName: dragging ? undefined : `vt-${item.id}` } as React.CSSProperties}
+                        >
+                          {canReorder ? (
+                            <SortableCard id={item.id} group={item.priority}>
+                              {(drag) => card(drag)}
+                            </SortableCard>
+                          ) : (
+                            card()
+                          )}
+                        </div>
+                      );
+                    })}
+                  </SortableContext>
+                ))}
+              </div>
+            </DndContext>
           ) : (
             <div className="mt-8 flex flex-col items-center gap-4 border border-line bg-surface px-6 py-20 text-center text-ink">
               <SearchX className="float size-9 text-muted" strokeWidth={1} />
