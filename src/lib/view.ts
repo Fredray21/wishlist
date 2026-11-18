@@ -12,6 +12,7 @@ export function toPublicItem(item: StoredItem, isAdmin: boolean): PublicItem {
     category: item.category,
     priority: item.priority,
     received: item.received,
+    order: item.order,
     createdAt: item.createdAt,
   };
   if (item.url) view.url = item.url;

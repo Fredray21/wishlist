@@ -30,6 +30,8 @@ export interface StoredItem {
   note?: string;
   received: boolean;
   receivedAt?: string | null;
+  /** Ordre manuel choisi par l'admin (plus petit = affiché en premier). */
+  order: number;
   createdAt: string;
   updatedAt: string;
   reservation?: Reservation | null;
@@ -56,6 +58,7 @@ export interface PublicItem {
   note?: string;
   received: boolean;
   receivedAt?: string | null;
+  order: number;
   createdAt: string;
   reserved?: boolean;
   /** Pseudo de la personne qui a réservé (visiteurs uniquement, jamais envoyé à l'admin). */

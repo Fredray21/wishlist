@@ -23,17 +23,21 @@ export async function POST(req: NextRequest) {
   if (!parsed.ok) return error(parsed.error, 400);
 
   const now = new Date().toISOString();
-  const item: StoredItem = {
-    id: randomUUID(),
-    ...parsed.value,
-    received: false,
-    receivedAt: null,
-    reservation: null,
-    createdAt: now,
-    updatedAt: now,
-  };
-  await mutateWishlist((data) => {
-    data.items.unshift(item);
+  const item = await mutateWishlist((data) => {
+    // Un nouveau cadeau arrive en tête de la sélection.
+    const first = data.items.reduce((min, i) => Math.min(min, i.order), 1);
+    const created: StoredItem = {
+      id: randomUUID(),
+      ...parsed.value,
+      received: false,
+      receivedAt: null,
+      reservation: null,
+      order: first - 1,
+      createdAt: now,
+      updatedAt: now,
+    };
+    data.items.unshift(created);
+    return created;
   });
   return json({ item: toPublicItem(item, true) }, { status: 201 });
 }
