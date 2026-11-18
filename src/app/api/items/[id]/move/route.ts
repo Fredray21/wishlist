@@ -15,8 +15,9 @@ class HttpError extends Error {
 }
 
 /**
- * Déplace un cadeau d'un cran dans sa catégorie (admin) :
- * il échange sa place avec le cadeau précédent / suivant de la même catégorie.
+ * Déplace un cadeau d'un cran dans sa priorité (admin) :
+ * il échange sa place avec le cadeau précédent / suivant de la même priorité
+ * (Coup de cœur, Envie ou Idée).
  * Body : { direction: "up" | "down" }. Renvoie la liste complète, en vue admin.
  */
 export async function POST(req: NextRequest, { params }: Ctx) {
@@ -31,7 +32,7 @@ export async function POST(req: NextRequest, { params }: Ctx) {
       const item = data.items.find((i) => i.id === id);
       if (!item) throw new HttpError("Article introuvable.", 404);
       const siblings = data.items
-        .filter((i) => i.category === item.category && i.received === item.received)
+        .filter((i) => i.priority === item.priority && i.received === item.received)
         .sort((a, b) => a.order - b.order);
       const index = siblings.indexOf(item);
       const neighbour = siblings[direction === "up" ? index - 1 : index + 1];

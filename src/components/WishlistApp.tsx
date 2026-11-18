@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { flushSync } from "react-dom";
 import { api, readLocalReservations, removeLocalReservation, type LocalReservation } from "@/lib/client";
 import type { Theme } from "@/lib/themes";
-import { PRIORITIES, type ItemsResponse, type PublicItem } from "@/lib/types";
+import { PRIORITIES, PRIORITY_LABELS, type ItemsResponse, type PublicItem } from "@/lib/types";
 import { CancelDialog } from "./CancelDialog";
 import { Filters, PRICE_RANGES, type FiltersState } from "./Filters";
 import { ItemCard } from "./ItemCard";
@@ -26,7 +26,7 @@ interface Props {
   theme: Theme;
 }
 
-const DEFAULT_FILTERS: FiltersState = { availability: "available", category: "all", price: "all", sort: "manual" };
+const DEFAULT_FILTERS: FiltersState = { availability: "available", category: "all", price: "all", sort: "priority" };
 
 export function WishlistApp(props: Props) {
   return (
@@ -110,10 +110,9 @@ function WishlistInner({ initialItems, isAdmin, ownerName, theme }: Props) {
             return (b.price ?? -Infinity) - (a.price ?? -Infinity);
           case "recent":
             return b.createdAt.localeCompare(a.createdAt);
-          case "manual":
-            return a.order - b.order;
           default:
-            return PRIORITIES.indexOf(a.priority) - PRIORITIES.indexOf(b.priority) || b.createdAt.localeCompare(a.createdAt);
+            // Par priorité, puis l'ordre choisi par l'admin à l'intérieur de chaque priorité.
+            return PRIORITIES.indexOf(a.priority) - PRIORITIES.indexOf(b.priority) || a.order - b.order;
         }
       });
 
@@ -217,12 +216,12 @@ function WishlistInner({ initialItems, isAdmin, ownerName, theme }: Props) {
 
   const cover = items
     .filter((i) => !i.received && (isAdmin || !i.reserved))
-    .sort((a, b) => a.order - b.order)
+    .sort((a, b) => PRIORITIES.indexOf(a.priority) - PRIORITIES.indexOf(b.priority) || a.order - b.order)
     .slice(0, 3);
 
-  // Voisins dans la même catégorie, selon l'ordre manuel (pour les flèches admin).
+  // Voisins de même priorité, selon l'ordre manuel (pour les flèches admin).
   const neighbours = (item: PublicItem) => {
-    const siblings = items.filter((i) => i.category === item.category && i.received === item.received).sort((a, b) => a.order - b.order);
+    const siblings = items.filter((i) => i.priority === item.priority && i.received === item.received).sort((a, b) => a.order - b.order);
     const index = siblings.findIndex((i) => i.id === item.id);
     return { first: index <= 0, last: index === siblings.length - 1 };
   };
@@ -310,9 +309,9 @@ function WishlistInner({ initialItems, isAdmin, ownerName, theme }: Props) {
 
           {isAdmin && active.length > 1 && (
             <p className="eyebrow mt-4 text-hero-muted">
-              {filters.sort === "manual"
-                ? "Astuce : les flèches ‹ › sur chaque photo déplacent le cadeau dans sa catégorie."
-                : "Pour ranger les cadeaux à la main, choisissez le tri « La sélection »."}
+              {filters.sort === "priority"
+                ? "Astuce : les flèches ‹ › sur chaque photo rangent le cadeau parmi ceux de même priorité."
+                : "Pour ranger les cadeaux à la main, choisissez le tri « Par priorité »."}
             </p>
           )}
 
@@ -329,8 +328,8 @@ function WishlistInner({ initialItems, isAdmin, ownerName, theme }: Props) {
                     index={index}
                     {...cardProps(item)}
                     move={
-                      isAdmin && filters.sort === "manual"
-                        ? { ...neighbours(item), category: item.category, onUp: () => move(item, "up"), onDown: () => move(item, "down") }
+                      isAdmin && filters.sort === "priority"
+                        ? { ...neighbours(item), group: PRIORITY_LABELS[item.priority], onUp: () => move(item, "up"), onDown: () => move(item, "down") }
                         : undefined
                     }
                   />

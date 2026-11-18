@@ -11,6 +11,7 @@ Wishlist personnelle : mes proches réservent un cadeau en secret, et moi je ne 
 ### Visiteurs (sans compte)
 - Bandeau anti-spoiler « 🤫 Chut ! … » en haut de la liste, rappelé dans la fenêtre de réservation
 - Filtres : Disponibles / Tous, catégorie, tranche de prix, tri (priorité, prix, récents)
+- Un clic sur la photo ou le titre ouvre la page du produit dans un nouvel onglet
 - **Réserver ce cadeau** : prénom ou pseudo **obligatoire** (visible des autres visiteurs, jamais de l'admin), note privée facultative. Un **code à 4 chiffres** est affiché et enregistré, avec un jeton, dans le `localStorage`
 - Les autres visiteurs voient « Réservé par Camille ». « Annuler ma réservation » marche en un clic avec le jeton local, ou avec le code depuis un autre appareil (tentatives limitées)
 
@@ -18,6 +19,7 @@ Wishlist personnelle : mes proches réservent un cadeau en secret, et moi je ne 
 - Mot de passe `ADMIN_PASSWORD`, cookie `HttpOnly` / `SameSite=Strict` signé en HMAC avec `SESSION_SECRET`
 - **Anti-spoiler strict** : quand on est connecté en admin, l'API et le HTML ne contiennent **jamais** la clé `reserved`. Les routes de réservation renvoient 403 à l'admin, pour qu'aucun message d'erreur ne trahisse rien
 - Ajouter un cadeau (avec remplissage automatique titre / image / prix depuis OpenGraph, titres de boutiques nettoyés), le modifier, le supprimer, le marquer « Reçu » ou annuler ce marquage (section « Déjà reçus » visible par tous)
+- **Ordre manuel** : avec le tri « Par priorité » (par défaut), des flèches ‹ › sur chaque carte rangent un cadeau parmi ceux de même priorité
 - **`/admin/reservations`** : libérer une réservation **à l'aveugle** (un cadeau ou tous). La réponse est identique que le cadeau soit réservé ou non : l'admin ne sait jamais lequel l'était
 
 ### Thèmes saisonniers (toujours automatiques)
