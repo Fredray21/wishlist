@@ -1,11 +1,11 @@
 "use client";
 
-import { ArrowUpRight, Check, ChevronLeft, ChevronRight, Gift, Heart, Lightbulb, Lock, Pencil, RotateCcw, Star, Trash2, Undo2 } from "lucide-react";
+import { ArrowUpRight, Check, ChevronLeft, ChevronRight, ExternalLink, Gift, Heart, Lightbulb, Lock, Pencil, RotateCcw, Star, Trash2, Undo2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { formatPrice, type LocalReservation } from "@/lib/client";
 import { PRIORITY_LABELS, type Priority, type PublicItem } from "@/lib/types";
 import { useEggs } from "./fx/EasterEggs";
-import { useMultiTap } from "./fx/gestures";
+import { useLongPress } from "./fx/gestures";
 import { burst, themeColors } from "./fx/particles";
 
 const PRIORITY_ICON: Record<Priority, React.ComponentType<{ className?: string }>> = {
@@ -32,8 +32,8 @@ export interface ItemCardProps {
   onEdit?: () => void;
   onToggleReceived?: () => void;
   onDelete?: () => void;
-  /** Admin, tri manuel : déplacer dans la catégorie. */
-  move?: { first: boolean; last: boolean; category: string; onUp: () => void; onDown: () => void };
+  /** Admin, tri par priorité : déplacer parmi les cadeaux de même priorité. */
+  move?: { first: boolean; last: boolean; group: string; onUp: () => void; onDown: () => void };
 }
 
 export function PriorityLabel({ priority }: { priority: Priority }) {
@@ -107,10 +107,10 @@ export function ItemCard(props: ItemCardProps) {
     }
   }
 
-  const onMediaTap = useMultiTap(
-    2,
+  // Easter egg « Déballage » : appui long sur la photo (le simple clic ouvre le lien).
+  const unwrap = useLongPress(
     useCallback(
-      (e: React.MouseEvent) => {
+      (e: React.PointerEvent) => {
         found("unwrap");
         const el = mediaRef.current;
         el?.classList.remove("wiggle");
@@ -120,29 +120,52 @@ export function ItemCard(props: ItemCardProps) {
       },
       [found],
     ),
+    700,
+  );
+
+  const mediaInner = (
+    <div ref={mediaRef} className={`h-full w-full ${item.received ? "opacity-60 grayscale" : ""}`}>
+      <ItemImage item={item} />
+    </div>
   );
 
   return (
     <article id={`item-${item.id}`} className="card group flex h-full scroll-mt-28 flex-col border border-line bg-surface text-ink transition-colors duration-300 hover:border-ink/40">
       {/* Photo : format identique pour toutes les cartes */}
-      <div className="card-media relative aspect-[4/5] overflow-hidden bg-surface-2" onClick={onMediaTap}>
-        <div ref={mediaRef} className={`h-full w-full ${item.received ? "opacity-60 grayscale" : ""}`}>
-          <ItemImage item={item} />
-        </div>
+      <div className="card-media relative aspect-[4/5] overflow-hidden bg-surface-2" {...unwrap.handlers} onContextMenu={(e) => e.preventDefault()}>
+        {item.url ? (
+          <a
+            href={item.url}
+            target="_blank"
+            rel="noopener noreferrer nofollow"
+            onClick={(e) => unwrap.fired.current && e.preventDefault()}
+            className="absolute inset-0 block [-webkit-touch-callout:none]"
+            aria-label={`Voir « ${item.title} » sur le site du vendeur`}
+            draggable={false}
+          >
+            {mediaInner}
+            {/* Indication au survol (ordinateur) */}
+            <span className="card-quick eyebrow pointer-events-none absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 whitespace-nowrap bg-ink px-3 py-2 text-surface [@media(hover:hover)]:inline-flex">
+              Voir le produit <ExternalLink className="size-3" />
+            </span>
+          </a>
+        ) : (
+          mediaInner
+        )}
 
-        <div className="absolute inset-x-0 top-0 flex items-start justify-between p-3">
+        <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between p-3 [&_button]:pointer-events-auto">
           <span className="bg-surface px-2 py-1">
             <PriorityLabel priority={item.priority} />
           </span>
           {props.move ? (
-            <span className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+            <span className="flex gap-1" onPointerDown={(e) => e.stopPropagation()}>
               <button
                 type="button"
                 disabled={busy || props.move.first}
                 onClick={props.move.onUp}
                 className="flex size-8 items-center justify-center border border-line bg-surface text-ink transition hover:bg-ink hover:text-surface disabled:pointer-events-none disabled:opacity-30"
-                aria-label={`Avancer dans « ${props.move.category} »`}
-                title={`Avancer dans « ${props.move.category} »`}
+                aria-label={`Avancer dans « ${props.move.group} »`}
+                title={`Avancer dans « ${props.move.group} »`}
               >
                 <ChevronLeft className="size-4" />
               </button>
@@ -151,8 +174,8 @@ export function ItemCard(props: ItemCardProps) {
                 disabled={busy || props.move.last}
                 onClick={props.move.onDown}
                 className="flex size-8 items-center justify-center border border-line bg-surface text-ink transition hover:bg-ink hover:text-surface disabled:pointer-events-none disabled:opacity-30"
-                aria-label={`Reculer dans « ${props.move.category} »`}
-                title={`Reculer dans « ${props.move.category} »`}
+                aria-label={`Reculer dans « ${props.move.group} »`}
+                title={`Reculer dans « ${props.move.group} »`}
               >
                 <ChevronRight className="size-4" />
               </button>
@@ -164,12 +187,12 @@ export function ItemCard(props: ItemCardProps) {
 
         {/* Statut en bandeau bas */}
         {item.received && (
-          <div className="eyebrow absolute inset-x-0 bottom-0 flex items-center justify-center gap-2 bg-success py-2.5 text-white">
+          <div className="eyebrow pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-center gap-2 bg-success py-2.5 text-white">
             <Check className="size-3.5" /> Déjà reçu
           </div>
         )}
         {reservedByOther && (
-          <div className="eyebrow absolute inset-x-0 bottom-0 flex items-center justify-center gap-2 bg-reserved px-2 py-2.5 !tracking-[0.16em] text-white">
+          <div className="eyebrow pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-center gap-2 bg-reserved px-2 py-2.5 !tracking-[0.16em] text-white">
             <Lock className="size-3 shrink-0" />
             <span className="truncate">
               <span className="hidden sm:inline">Réservé </span>par {item.reservedBy}
@@ -177,7 +200,7 @@ export function ItemCard(props: ItemCardProps) {
           </div>
         )}
         {reserved && mine && (
-          <div className="eyebrow absolute inset-x-0 bottom-0 flex items-center justify-center gap-2 bg-success px-2 py-2.5 !tracking-[0.16em] text-white">
+          <div className="eyebrow pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-center gap-2 bg-success px-2 py-2.5 !tracking-[0.16em] text-white">
             <Gift className="size-3 shrink-0" />
             <span className="truncate">
               Par vous · code <span className="font-mono">{mine.code}</span>
@@ -190,7 +213,13 @@ export function ItemCard(props: ItemCardProps) {
       <div className="flex flex-1 flex-col p-3 sm:p-5">
         <p className="eyebrow truncate text-muted">{item.category}</p>
         <h3 className="font-display mt-2 line-clamp-2 min-h-[2.5em] text-base leading-[1.25] sm:text-xl" title={item.title}>
-          {item.title}
+          {item.url ? (
+            <a href={item.url} target="_blank" rel="noopener noreferrer nofollow" className="transition-colors hover:text-primary">
+              {item.title}
+            </a>
+          ) : (
+            item.title
+          )}
         </h3>
         {item.note && <p className="mt-2 line-clamp-2 hidden text-sm leading-relaxed text-muted sm:block">{item.note}</p>}
 

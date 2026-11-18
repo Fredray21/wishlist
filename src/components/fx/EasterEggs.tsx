@@ -21,7 +21,7 @@ export const EGGS = [
   { id: "scatter", emoji: "🔤", label: "Lettres en vadrouille", hint: "Double-clic / double-tape sur le grand titre" },
   { id: "marquee", emoji: "⏪", label: "Rembobinage", hint: "Touche le bandeau défilant tout en haut" },
   { id: "price", emoji: "💸", label: "Le prix du cœur", hint: "Touche 5 fois le prix d'un cadeau" },
-  { id: "unwrap", emoji: "💝", label: "Déballage", hint: "Double-clic / double-tape sur une photo" },
+  { id: "unwrap", emoji: "💝", label: "Déballage", hint: "Reste appuyé sur une photo" },
   { id: "promise", emoji: "🤫", label: "Promis, juré", hint: "Le 🤫 de la note de la rédaction a un secret (3 fois)" },
   { id: "lock", emoji: "🔒", label: "Trop curieux·se", hint: "Reste appuyé (ou survole) le cadenas du pied de page" },
   { id: "sparkle", emoji: "✨", label: "Poussière de fée", hint: "Glisse le doigt sur le grand titre (PC : maintiens Maj et bouge la souris)" },
