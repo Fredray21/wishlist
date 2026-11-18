@@ -88,29 +88,36 @@ jobs:
             printf "BIRTHDAY_MONTH=%s\n" "$BIRTHDAY_MONTH"
           } > deploy/.env
 
-      - name: Copie sur le VPS
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USERNAME }}
-          password: ${{ secrets.VPS_PASSWORD }}
-          source: "deploy/docker-compose.yml,deploy/.env"
-          target: /home/${{ secrets.VPS_USERNAME }}/app/wishlist
-          strip_components: 1
+      - name: Empaquetage pour le VPS
+        run: |
+          # Une seule connexion SSH ensuite : les fichiers voyagent en base64 dans une variable.
+          PAYLOAD=$(tar czf - -C deploy docker-compose.yml .env | base64 -w0)
+          echo "::add-mask::$PAYLOAD"
+          echo "DEPLOY_PAYLOAD=$PAYLOAD" >> "$GITHUB_ENV"
 
-      - name: Pull + démarrage
+      - name: Copie + pull + démarrage (une seule connexion SSH)
         uses: appleboy/ssh-action@v1.2.5
+        env:
+          DEPLOY_PAYLOAD: ${{ env.DEPLOY_PAYLOAD }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
           password: ${{ secrets.VPS_PASSWORD }}
+          envs: DEPLOY_PAYLOAD,GHCR_TOKEN,GHCR_USER
+          timeout: 60s
+          command_timeout: 15m
           script: |
             set -e
-            cd /home/${{ secrets.VPS_USERNAME }}/app/wishlist
+            mkdir -p ~/app/wishlist/data
+            cd ~/app/wishlist
+            echo "$DEPLOY_PAYLOAD" | base64 -d | tar xzf - -C .
             chmod 600 .env
-            # Données persistantes : jamais supprimées ni écrasées par le déploiement.
-            mkdir -p data
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            # data/ (la wishlist) n'est jamais touché par le déploiement.
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
             docker compose pull
             docker compose up -d --remove-orphans
             docker image prune -f
+            sleep 5
+            curl -fsS http://127.0.0.1:5020/api/health && echo " <- wishlist OK" || { docker compose logs --tail 50; exit 1; }
