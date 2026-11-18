@@ -19,18 +19,29 @@ let queue: Promise<unknown> = Promise.resolve();
 let ensured = false;
 
 function normalize(raw: unknown): WishlistFile {
-  const items = Array.isArray((raw as WishlistFile | null)?.items) ? (raw as WishlistFile).items : [];
-  return {
-    version: 1,
-    items: items
-      .filter((i): i is StoredItem => Boolean(i && typeof i.id === "string" && typeof i.title === "string"))
-      .map((i) => ({
-        ...i,
-        category: typeof i.category === "string" && i.category.trim() ? i.category : "Divers",
-        priority: PRIORITIES.includes(i.priority) ? i.priority : "envie",
-        received: Boolean(i.received),
-      })),
-  };
+  const list = Array.isArray((raw as WishlistFile | null)?.items) ? (raw as WishlistFile).items : [];
+  const items = list
+    .filter((i): i is StoredItem => Boolean(i && typeof i.id === "string" && typeof i.title === "string"))
+    .map((i) => ({
+      ...i,
+      category: typeof i.category === "string" && i.category.trim() ? i.category : "Divers",
+      priority: PRIORITIES.includes(i.priority) ? i.priority : "envie",
+      received: Boolean(i.received),
+    }));
+
+  // Anciennes données sans ordre manuel : on part de l'ordre « par priorité, plus récent d'abord ».
+  if (items.some((i) => typeof i.order !== "number" || !Number.isFinite(i.order))) {
+    [...items]
+      .sort(
+        (a, b) =>
+          (typeof a.order === "number" ? -1 : 0) - (typeof b.order === "number" ? -1 : 0) ||
+          (a.order ?? 0) - (b.order ?? 0) ||
+          PRIORITIES.indexOf(a.priority) - PRIORITIES.indexOf(b.priority) ||
+          b.createdAt.localeCompare(a.createdAt),
+      )
+      .forEach((item, index) => (item.order = index + 1));
+  }
+  return { version: 1, items };
 }
 
 async function writeAtomic(file: string, data: WishlistFile): Promise<void> {

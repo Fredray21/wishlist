@@ -26,7 +26,7 @@ interface Props {
   theme: Theme;
 }
 
-const DEFAULT_FILTERS: FiltersState = { availability: "available", category: "all", price: "all", sort: "priority" };
+const DEFAULT_FILTERS: FiltersState = { availability: "available", category: "all", price: "all", sort: "manual" };
 
 export function WishlistApp(props: Props) {
   return (
@@ -110,6 +110,8 @@ function WishlistInner({ initialItems, isAdmin, ownerName, theme }: Props) {
             return (b.price ?? -Infinity) - (a.price ?? -Infinity);
           case "recent":
             return b.createdAt.localeCompare(a.createdAt);
+          case "manual":
+            return a.order - b.order;
           default:
             return PRIORITIES.indexOf(a.priority) - PRIORITIES.indexOf(b.priority) || b.createdAt.localeCompare(a.createdAt);
         }
@@ -215,8 +217,30 @@ function WishlistInner({ initialItems, isAdmin, ownerName, theme }: Props) {
 
   const cover = items
     .filter((i) => !i.received && (isAdmin || !i.reserved))
-    .sort((a, b) => PRIORITIES.indexOf(a.priority) - PRIORITIES.indexOf(b.priority) || b.createdAt.localeCompare(a.createdAt))
+    .sort((a, b) => a.order - b.order)
     .slice(0, 3);
+
+  // Voisins dans la même catégorie, selon l'ordre manuel (pour les flèches admin).
+  const neighbours = (item: PublicItem) => {
+    const siblings = items.filter((i) => i.category === item.category && i.received === item.received).sort((a, b) => a.order - b.order);
+    const index = siblings.findIndex((i) => i.id === item.id);
+    return { first: index <= 0, last: index === siblings.length - 1 };
+  };
+
+  async function move(item: PublicItem, direction: "up" | "down") {
+    setBusyId(item.id);
+    try {
+      const doc = document as Document & { startViewTransition?: (cb: () => void) => unknown };
+      const res = await api<{ items: PublicItem[] }>(`/api/items/${item.id}/move`, { method: "POST", body: { direction } });
+      if (doc.startViewTransition && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        doc.startViewTransition(() => flushSync(() => setItems(res.items)));
+      } else setItems(res.items);
+    } catch (error) {
+      notify(error instanceof Error ? error.message : "Erreur inattendue.");
+    } finally {
+      setBusyId(null);
+    }
+  }
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-7xl flex-col px-4 sm:px-6 lg:px-10">
@@ -284,6 +308,14 @@ function WishlistInner({ initialItems, isAdmin, ownerName, theme }: Props) {
             </div>
           </div>
 
+          {isAdmin && active.length > 1 && (
+            <p className="eyebrow mt-4 text-hero-muted">
+              {filters.sort === "manual"
+                ? "Astuce : les flèches ‹ › sur chaque photo déplacent le cadeau dans sa catégorie."
+                : "Pour ranger les cadeaux à la main, choisissez le tri « La sélection »."}
+            </p>
+          )}
+
           {active.length > 0 ? (
             <div className="mt-8 grid grid-cols-2 gap-x-3 gap-y-8 sm:gap-x-6 sm:gap-y-10 lg:grid-cols-3 xl:grid-cols-4">
               {active.map((item, index) => (
@@ -293,7 +325,15 @@ function WishlistInner({ initialItems, isAdmin, ownerName, theme }: Props) {
                  
                   style={{ "--delay": `${(index % 4) * 60}ms`, viewTransitionName: `vt-${item.id}` } as React.CSSProperties}
                 >
-                  <ItemCard index={index} {...cardProps(item)} />
+                  <ItemCard
+                    index={index}
+                    {...cardProps(item)}
+                    move={
+                      isAdmin && filters.sort === "manual"
+                        ? { ...neighbours(item), category: item.category, onUp: () => move(item, "up"), onDown: () => move(item, "down") }
+                        : undefined
+                    }
+                  />
                 </div>
               ))}
             </div>

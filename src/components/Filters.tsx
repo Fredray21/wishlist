@@ -9,7 +9,7 @@ export const PRICE_RANGES = [
   { id: "gt200", label: "Plus de 200 €", min: 200, max: Infinity },
 ] as const;
 
-export type Sort = "priority" | "price-asc" | "price-desc" | "recent";
+export type Sort = "manual" | "priority" | "price-asc" | "price-desc" | "recent";
 
 export interface FiltersState {
   availability: "available" | "all";
@@ -101,6 +101,7 @@ export function Filters({ value, onChange, categories, isAdmin, counts }: Props)
           ))}
         </LineSelect>
         <LineSelect label="Trier" value={value.sort} onChange={(v) => set("sort", v as Sort)}>
+          <option value="manual">La sélection</option>
           <option value="priority">Par priorité</option>
           <option value="price-asc">Prix croissant</option>
           <option value="price-desc">Prix décroissant</option>

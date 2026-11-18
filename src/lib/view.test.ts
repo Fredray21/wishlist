@@ -8,6 +8,7 @@ const reserved: StoredItem = {
   category: "High-tech",
   priority: "envie",
   received: false,
+  order: 1,
   createdAt: "2026-01-01T00:00:00.000Z",
   updatedAt: "2026-01-01T00:00:00.000Z",
   reservation: { name: "Léa", note: "secret", codeHash: "x", tokenHash: "y", createdAt: "2026-01-02T00:00:00.000Z" },

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRight, Check, Gift, Heart, Lightbulb, Lock, Pencil, RotateCcw, Star, Trash2, Undo2 } from "lucide-react";
+import { ArrowUpRight, Check, ChevronLeft, ChevronRight, Gift, Heart, Lightbulb, Lock, Pencil, RotateCcw, Star, Trash2, Undo2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { formatPrice, type LocalReservation } from "@/lib/client";
 import { PRIORITY_LABELS, type Priority, type PublicItem } from "@/lib/types";
@@ -32,6 +32,8 @@ export interface ItemCardProps {
   onEdit?: () => void;
   onToggleReceived?: () => void;
   onDelete?: () => void;
+  /** Admin, tri manuel : déplacer dans la catégorie. */
+  move?: { first: boolean; last: boolean; category: string; onUp: () => void; onDown: () => void };
 }
 
 export function PriorityLabel({ priority }: { priority: Priority }) {
@@ -132,7 +134,32 @@ export function ItemCard(props: ItemCardProps) {
           <span className="bg-surface px-2 py-1">
             <PriorityLabel priority={item.priority} />
           </span>
-          <span className="eyebrow tabular hidden text-muted sm:inline">N°{number}</span>
+          {props.move ? (
+            <span className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                disabled={busy || props.move.first}
+                onClick={props.move.onUp}
+                className="flex size-8 items-center justify-center border border-line bg-surface text-ink transition hover:bg-ink hover:text-surface disabled:pointer-events-none disabled:opacity-30"
+                aria-label={`Avancer dans « ${props.move.category} »`}
+                title={`Avancer dans « ${props.move.category} »`}
+              >
+                <ChevronLeft className="size-4" />
+              </button>
+              <button
+                type="button"
+                disabled={busy || props.move.last}
+                onClick={props.move.onDown}
+                className="flex size-8 items-center justify-center border border-line bg-surface text-ink transition hover:bg-ink hover:text-surface disabled:pointer-events-none disabled:opacity-30"
+                aria-label={`Reculer dans « ${props.move.category} »`}
+                title={`Reculer dans « ${props.move.category} »`}
+              >
+                <ChevronRight className="size-4" />
+              </button>
+            </span>
+          ) : (
+            <span className="eyebrow tabular hidden text-muted sm:inline">N°{number}</span>
+          )}
         </div>
 
         {/* Statut en bandeau bas */}
