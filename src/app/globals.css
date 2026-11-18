@@ -156,6 +156,16 @@
 html {
   background: var(--bg);
   scroll-behavior: smooth;
+  scrollbar-gutter: stable;
+}
+
+/* Une fenêtre est ouverte : la page derrière ne défile plus. */
+html:has(dialog[open]) {
+  overflow: hidden;
+}
+html:has(dialog[open]) body {
+  overflow: hidden;
+  touch-action: none;
 }
 
 body {
@@ -516,6 +526,10 @@ dialog.modal {
   max-height: calc(100dvh - 2rem);
   color: var(--ink);
   overflow: visible;
+  overscroll-behavior: contain;
+}
+dialog.modal * {
+  touch-action: auto;
 }
 dialog.modal::backdrop {
   background: rgba(10, 10, 10, 0.55);

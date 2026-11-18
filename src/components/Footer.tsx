@@ -89,7 +89,7 @@ export function Footer({ isAdmin, ownerName }: { isAdmin: boolean; ownerName: st
         <div className="mb-4 h-1.5 overflow-hidden rounded-full bg-surface-2">
           <div className="h-full rounded-full bg-primary transition-all duration-700" style={{ width: `${(count / EGGS.length) * 100}%` }} />
         </div>
-        <ul className="grid max-h-[55dvh] grid-cols-1 gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
+        <ul className="grid max-h-[55dvh] grid-cols-1 gap-2 overflow-y-auto overscroll-contain pr-1 sm:grid-cols-2">
           {EGGS.map((egg) => {
             const ok = eggs.has(egg.id);
             return (
