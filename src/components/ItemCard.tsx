@@ -222,7 +222,7 @@ export function ItemCard(props: ItemCardProps) {
         {reservedByOther && (
           <div className="eyebrow pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-center gap-2 bg-reserved px-2 py-2.5 !tracking-[0.16em] text-white">
             <Lock className="size-3 shrink-0" />
-            <span className="truncate">
+            <span className="min-w-0 break-words text-center">
               <span className="hidden sm:inline">Réservé </span>par {item.reservedBy}
             </span>
           </div>
@@ -230,7 +230,7 @@ export function ItemCard(props: ItemCardProps) {
         {reserved && mine && (
           <div className="eyebrow pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-center gap-2 bg-success px-2 py-2.5 !tracking-[0.16em] text-white">
             <Gift className="size-3 shrink-0" />
-            <span className="truncate">
+            <span className="min-w-0 break-words text-center">
               Par vous · code <span className="font-mono">{mine.code}</span>
             </span>
           </div>
@@ -239,8 +239,8 @@ export function ItemCard(props: ItemCardProps) {
 
       {/* Texte */}
       <div className="flex flex-1 flex-col p-3 sm:p-5">
-        <p className="eyebrow truncate text-muted">{item.category}</p>
-        <h3 className="font-display mt-2 line-clamp-2 min-h-[2.5em] text-base leading-[1.25] sm:text-xl" title={item.title}>
+        <p className="eyebrow break-words text-muted">{item.category}</p>
+        <h3 className="font-display mt-2 min-h-[2.5em] break-words text-base leading-[1.25] sm:text-xl" title={item.title}>
           {item.url ? (
             <a href={item.url} target="_blank" rel="noopener noreferrer nofollow" className="transition-colors hover:text-primary">
               {item.title}
@@ -249,7 +249,7 @@ export function ItemCard(props: ItemCardProps) {
             item.title
           )}
         </h3>
-        {item.note && <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-muted">{item.note}</p>}
+        {item.note && <p className="mt-2 mb-3 whitespace-pre-line break-words text-sm leading-relaxed text-muted">{item.note}</p>}
 
         {/* Prix + lien */}
         <div className="mt-auto flex items-end justify-between gap-2 border-t border-line pt-3 sm:pt-4">
